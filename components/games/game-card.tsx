@@ -4,6 +4,7 @@ import {
     ArrowDownIcon,
     ArrowUpIcon
 } from '@heroicons/react/24/outline'
+import Link from "next/link";
 
 export function GameCard() {
 
@@ -12,14 +13,14 @@ export function GameCard() {
     return (
         <Card className="w-72 overflow-hidden flex-shrink-0">
             <CardHeader className="p-0">
-                <div className="relative w-full h-48">
+                <Link className="relative w-full h-48" href={"game/gameId"}>
                     <Image
                         src="/coinflip-banner.jpg"
                         alt="Coin flip banner"
                         layout="fill"
                         objectFit="cover"
                     />
-                </div>
+                </Link>
             </CardHeader>
             <CardContent className="p-4">
                 <h2 className="text-xl font-bold mb-2">06 87&apos;s Coin Flip</h2>

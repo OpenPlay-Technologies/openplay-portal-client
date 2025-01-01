@@ -1,16 +1,18 @@
-﻿import Image from "next/image";
+﻿import Link from "next/link";
+import {GameData} from "@/api/models/models";
 
 
-export default function FeaturedGameCard() {
+export default function FeaturedGameCard(props: {
+    data: GameData
+}) {
     return (
-        <div className="flex-1 min-w-32 overflow-hidden relative rounded-xl aspect-square">
+        <Link className="flex-1 min-w-32 max-w-96 overflow-hidden relative rounded-xl aspect-square" href={`/game/${props.data.id}`}>
             {/* Image */}
             <div className="relative w-full h-full">
-                <Image
-                    src="/coinflip-banner.jpg"
-                    alt="Coin flip banner"
-                    layout="fill"
-                    objectFit="cover"
+                <img
+                    src={props.data.image_url}
+                    alt={props.data.name + "-banner"}
+                    className={"object-cover w-full h-full"}
                 />
 
                 {/* Gradient Shadow Overlay */}
@@ -19,8 +21,8 @@ export default function FeaturedGameCard() {
 
             {/* Text */}
             <div className="absolute bottom-2 left-2 text-white">
-                <h2 className="text-sm font-semibold">06 87&apos;s Coin Flip</h2>
+                <h2 className="text-sm font-semibold">{props.data.name}</h2>
             </div>
-        </div>
+        </Link>
     );
 }

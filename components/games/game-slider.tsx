@@ -1,4 +1,5 @@
 ﻿import {GameCard} from "@/components/games/game-card";
+import {Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious} from "@/components/ui/carousel";
 
 interface GameSliderProps {
     title: string;
@@ -6,15 +7,23 @@ interface GameSliderProps {
 
 export function GameSlider(props: GameSliderProps) {
     return (
-        <div className={"px-8 py-4"}>
-            <h2 className={"text-xl font-bold my-4"}>
+        <div className={"p-8 mx-8"}>
+            <h2 className={"font-semibold text-2xl mb-2"}>
                 {props.title}
             </h2>
-            <div className={"flex flex-row flex-wrap gap-4"}>
-                <GameCard />
-                <GameCard />
-                <GameCard />
-            </div>
+            <Carousel className="w-full">
+                <CarouselContent className="-ml-1">
+                    {Array.from({ length: 50 }).map((_, index) => (
+                        <CarouselItem key={index} className="pl-1 basis-1/8">
+                            <div className="p-1">
+                                <GameCard/>
+                            </div>
+                        </CarouselItem>
+                    ))}
+                </CarouselContent>
+                <CarouselPrevious />
+                <CarouselNext />
+            </Carousel>
         </div>
     );
 }
