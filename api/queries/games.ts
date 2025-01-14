@@ -14,9 +14,6 @@ export const fetchGame = async (gameId: string): Promise<GameData | undefined> =
     });
 
     const rawData = result?.data?.object?.asMoveObject?.contents?.json;
-    if (!rawData) {
-        throw new Error(`Data not found for gameId: ${gameId}`);
-    }
     return rawData as GameData;
 }
 

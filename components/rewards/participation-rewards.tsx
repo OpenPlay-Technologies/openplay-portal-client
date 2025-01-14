@@ -140,8 +140,16 @@ export default function ParticipationRewards(props: ParticipationRewardsProps) {
             ],
         });
         tx.transferObjects([coin], account.address);
-
-
+        
+        if (participation.active_stake == 0 && participation.inactive_stake == 0) {
+            tx.moveCall({
+                target: `${packageId}::participation::destroy_empty`,
+                arguments: [
+                    tx.object(participation.id),
+                ],
+            });
+        }
+        
         signAndExecuteTransaction({
                 transaction: tx
             },

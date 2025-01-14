@@ -25,9 +25,9 @@ const FileUploadBox = React.forwardRef<HTMLInputElement, FileUploadBoxProps>(
             console.log("File selected:", file);
 
             setLoading(true); // Start loading state
-
+            
             try {
-                const client = new UploadClient({publicKey: process.env.UPLOADCARE_PUBLIC_KEY ?? ""});
+                const client = new UploadClient({publicKey: process.env.NEXT_PUBLIC_UPLOADCARE_PUBLIC_KEY ?? ""});
                 const response = await client.uploadFile(file);
 
                 console.log("File uploaded successfully:", response.cdnUrl);

@@ -1,5 +1,5 @@
 ﻿import {Card, CardContent, CardHeader} from "@/components/ui/card";
-import {ActivityIcon, CoinsIcon} from "lucide-react";
+import {ActivityIcon, CheckIcon, CoinsIcon, LandmarkIcon, XIcon} from "lucide-react";
 import {ArrowTopRightOnSquareIcon, ListBulletIcon, TagIcon} from "@heroicons/react/24/outline";
 import {cn, formatBps, formatSuiAmount} from "@/lib/utils";
 import React from "react";
@@ -85,6 +85,58 @@ export default async function GameDetails({params}: { params: { gameId: string }
                         </CardContent>
                     </Card>
                 </div>
+                {/*Vault status*/}
+                <div className="w-full pb-4">
+                    <Card>
+                        <CardHeader className={"border-b"}>
+                            <div className={"font-semibold inline-flex items-center"}>
+                                <LandmarkIcon className={"w-6 h-6 mr-2"} strokeWidth={2}/>
+                                Vault Status
+                            </div>
+                        </CardHeader>
+                        <CardContent className={"p-6"}>
+                            <div className={"grid grid-cols-2 gap-2"}>
+                                <div>
+                                    <p className={"text-muted-foreground text-sm"}>
+                                        Active
+                                    </p>
+                                    <p className={" "}>
+                                        {game.vault.active ? 
+                                            <CheckIcon className={"w-6 h-6 text-green-500"} strokeWidth={2}/>
+                                            : 
+                                            <XIcon className={"w-6 h-6 text-red-500"} strokeWidth={2}/>
+                                        }
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className={"text-muted-foreground text-sm"}>
+                                        Last updated epoch
+                                    </p>
+                                    <p className={" "}>
+                                        {game.vault.epoch}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className={"text-muted-foreground text-sm"}>
+                                        Reserve
+                                    </p>
+                                    <p className={" "}>
+                                        {formatSuiAmount(game.vault.reserve_balance.value)}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className={"text-muted-foreground text-sm"}>
+                                        Play balance
+                                    </p>
+                                    <p className={" "}>
+                                        {formatSuiAmount(game.vault.play_balance.value)}
+                                    </p>
+                                </div>
+
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
             </div>
             {/*Column 2*/}
             <div className={"min-w-60 w-2/3"}>
@@ -155,10 +207,12 @@ export default async function GameDetails({params}: { params: { gameId: string }
                                 {/*P&L*/}
                                 <div>
                                     <p className={"text-muted-foreground text-sm"}>
-                                        Profits / Losses
+                                        Distributed profits / losses
                                     </p>
-                                    <p className={" "}>
-                                        {formatSuiAmount(game.state.history.all_time_win_amount - game.state.history.all_time_bet_amount)}
+                                    <p className={game.state.history.all_time_profits > game.state.history.all_time_losses ? 
+                                    "text-green-500" :
+                                    "text-red-500"}>
+                                        {formatSuiAmount(game.state.history.all_time_profits - game.state.history.all_time_losses)}
                                     </p>
                                 </div>
                             </div>

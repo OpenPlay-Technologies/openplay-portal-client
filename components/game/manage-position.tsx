@@ -5,7 +5,7 @@ import {UserPenIcon} from "lucide-react";
 import {Input} from "@/components/ui/input";
 import {Button} from "@/components/ui/button";
 import React, {useCallback, useEffect, useState} from "react";
-import { GameData, ParticipationData} from "@/api/models/models";
+import {GameData, ParticipationData} from "@/api/models/models";
 import {useCurrentAccount, useSignAndExecuteTransaction, useSuiClient} from "@mysten/dapp-kit";
 import {z} from "zod";
 import {useForm} from "react-hook-form";
@@ -18,6 +18,20 @@ import {ArrowPathIcon} from "@heroicons/react/24/outline";
 import {formatSuiAmount} from "@/lib/utils";
 import {useToast} from "@/hooks/use-toast";
 import {useBalance} from "@/components/providers/balance-provider";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuGroup,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuPortal,
+    DropdownMenuSeparator,
+    DropdownMenuShortcut,
+    DropdownMenuSub,
+    DropdownMenuSubContent,
+    DropdownMenuSubTrigger,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 interface ManagePositionProps {
     game: GameData;
@@ -31,7 +45,7 @@ const stakeSchema = z.object({
 });
 
 export default function ManagePosition(props: ManagePositionProps) {
-    const { toast } = useToast();
+    const {toast} = useToast();
     const {updateBalance} = useBalance();
     const [loadingStake, setLoadingStake] = useState<boolean>(false);
     const [loadingUnstake, setLoadingUnstake] = useState<boolean>(false);
@@ -70,14 +84,26 @@ export default function ManagePosition(props: ManagePositionProps) {
     });
 
     const account = useCurrentAccount();
-    const [participationData, setParticipationData] = useState<ParticipationData | null>(null);
+    const [participationData, setParticipationData] = useState<ParticipationData[] | null>([]);
+    const [selectedParticipation, setSelectedParticipation] = useState<ParticipationData | null>(null);
     const updateParticipationData = useCallback(async () => {
         if (!account?.address) {
             return;
         }
         const participations = await fetchAllParticipations(account.address);
-        setParticipationData(participations.find(p => p.game_id == props.game.id) ?? null);
-    }, [account]);
+        setParticipationData(participations.filter(p => p.game_id == props.game.id).sort(
+            (a, b) =>
+                (b.active_stake + b.inactive_stake + b.claimable_balance) -
+                (a.active_stake + a.inactive_stake + a.claimable_balance)
+        ));
+        if (selectedParticipation == null && participations.length > 0) {
+            setSelectedParticipation(participations[0]);
+        }
+        else {
+            const selected = participations.find(p => p.id == selectedParticipation?.id);
+            setSelectedParticipation(selected ?? null);
+        }
+    }, [account, selectedParticipation]);
 
     useEffect(() => {
         updateParticipationData();
@@ -85,9 +111,9 @@ export default function ManagePosition(props: ManagePositionProps) {
 
     async function handleUnstake() {
 
-        if (!account || !participationData) {
+        if (!account || !selectedParticipation) {
             toast({
-                variant:"destructive",
+                variant: "destructive",
                 title: 'Unstake failed',
                 description: 'Participation not found',
             });
@@ -99,14 +125,14 @@ export default function ManagePosition(props: ManagePositionProps) {
             target: `${packageId}::game::update_participation`,
             arguments: [
                 tx.object(props.game.id),
-                tx.object(participationData.id),
+                tx.object(selectedParticipation.id),
             ],
         });
         tx.moveCall({
             target: `${packageId}::game::unstake`,
             arguments: [
                 tx.object(props.game.id),
-                tx.object(participationData.id),
+                tx.object(selectedParticipation.id),
             ],
         });
 
@@ -130,7 +156,7 @@ export default function ManagePosition(props: ManagePositionProps) {
                         updateBalance();
                     }).catch((error) => {
                         toast({
-                            variant:"destructive",
+                            variant: "destructive",
                             title: 'Transaction failed',
                             description: error.message,
                         });
@@ -138,7 +164,7 @@ export default function ManagePosition(props: ManagePositionProps) {
                 },
                 onError: (error) => {
                     toast({
-                        variant:"destructive",
+                        variant: "destructive",
                         title: 'Transaction failed',
                         description: error.message,
                     })
@@ -150,7 +176,7 @@ export default function ManagePosition(props: ManagePositionProps) {
 
         if (!account) {
             toast({
-                variant:"destructive",
+                variant: "destructive",
                 title: 'Account not found',
                 description: 'Please connect your wallet to stake.',
             })
@@ -158,9 +184,9 @@ export default function ManagePosition(props: ManagePositionProps) {
         }
 
         const tx = new Transaction();
-
+        
         let participationObj;
-        if (!participationData) {
+        if (!selectedParticipation) {
             const [participation] = tx.moveCall({
                 target: `${packageId}::game::new_participation`,
                 arguments: [
@@ -169,7 +195,7 @@ export default function ManagePosition(props: ManagePositionProps) {
             });
             participationObj = tx.object(participation);
         } else {
-            participationObj = tx.object(participationData.id);
+            participationObj = tx.object(selectedParticipation.id);
             tx.moveCall({
                 target: `${packageId}::game::update_participation`,
                 arguments: [
@@ -189,7 +215,7 @@ export default function ManagePosition(props: ManagePositionProps) {
             ],
         });
 
-        if (!participationData) {
+        if (!selectedParticipation) {
             tx.transferObjects([participationObj], account.address);
         }
 
@@ -213,7 +239,7 @@ export default function ManagePosition(props: ManagePositionProps) {
                         updateBalance();
                     }).catch((error) => {
                         toast({
-                            variant:"destructive",
+                            variant: "destructive",
                             title: 'Transaction failed',
                             description: error.message,
                         })
@@ -221,7 +247,7 @@ export default function ManagePosition(props: ManagePositionProps) {
                 },
                 onError: (error) => {
                     toast({
-                        variant:"destructive",
+                        variant: "destructive",
                         title: 'Transaction failed',
                         description: error.message,
                     })
@@ -231,10 +257,9 @@ export default function ManagePosition(props: ManagePositionProps) {
 
     // Update the participation
     async function handleUpdate() {
-
-        if (!account || !participationData) {
+        if (!account || !selectedParticipation) {
             toast({
-                variant:"destructive",
+                variant: "destructive",
                 title: 'Account not found',
                 description: 'Participation not found',
             })
@@ -246,8 +271,8 @@ export default function ManagePosition(props: ManagePositionProps) {
         tx.moveCall({
             target: `${packageId}::game::update_participation`,
             arguments: [
-                tx.object(participationData.game_id),
-                tx.object(participationData.id),
+                tx.object(selectedParticipation.game_id),
+                tx.object(selectedParticipation.id),
             ],
         });
 
@@ -270,7 +295,7 @@ export default function ManagePosition(props: ManagePositionProps) {
                         updateBalance();
                     }).catch((error) => {
                         toast({
-                            variant:"destructive",
+                            variant: "destructive",
                             title: 'Transaction failed',
                             description: error.message,
                         })
@@ -278,7 +303,7 @@ export default function ManagePosition(props: ManagePositionProps) {
                 },
                 onError: (error) => {
                     toast({
-                        variant:"destructive",
+                        variant: "destructive",
                         title: 'Transaction failed',
                         description: error.message,
                     })
@@ -288,9 +313,9 @@ export default function ManagePosition(props: ManagePositionProps) {
 
     // Claim
     async function handleClaim() {
-        if (!account || !participationData) {
+        if (!account || !selectedParticipation) {
             toast({
-                variant:"destructive",
+                variant: "destructive",
                 title: 'Claim failed',
                 description: 'Participation not found',
             })
@@ -303,17 +328,26 @@ export default function ManagePosition(props: ManagePositionProps) {
             target: `${packageId}::game::update_participation`,
             arguments: [
                 tx.object(props.game.id),
-                tx.object(participationData.id),
+                tx.object(selectedParticipation.id),
             ],
         });
         const [coin] = tx.moveCall({
             target: `${packageId}::game::claim_all`,
             arguments: [
-                tx.object(participationData.game_id),
-                tx.object(participationData.id),
+                tx.object(selectedParticipation.game_id),
+                tx.object(selectedParticipation.id),
             ],
         });
         tx.transferObjects([coin], account.address);
+
+        if (selectedParticipation.active_stake == 0 && selectedParticipation.inactive_stake == 0) {
+            tx.moveCall({
+                target: `${packageId}::participation::destroy_empty`,
+                arguments: [
+                    tx.object(selectedParticipation.id),
+                ],
+            });
+        }
 
 
         signAndExecuteTransaction({
@@ -335,7 +369,7 @@ export default function ManagePosition(props: ManagePositionProps) {
                         updateBalance();
                     }).catch((error) => {
                         toast({
-                            variant:"destructive",
+                            variant: "destructive",
                             title: 'Transaction failed',
                             description: error.message,
                         })
@@ -343,7 +377,7 @@ export default function ManagePosition(props: ManagePositionProps) {
                 },
                 onError: (error) => {
                     toast({
-                        variant:"destructive",
+                        variant: "destructive",
                         title: 'Transaction failed',
                         description: error.message,
                     })
@@ -368,6 +402,45 @@ export default function ManagePosition(props: ManagePositionProps) {
                 )}
                 {account && (
                     <>
+                        {(participationData?.length ?? 0) > 1 && <CardContent className={"p-6 border-b"}>
+                            <p className={"font-semibold "}>
+                                Select participation ({participationData?.length ?? 0} participations found)
+                            </p>
+                            <p className={"text-sm text-muted-foreground my-2"}>
+                                Each participation can be managed individually. It is advised to have only one
+                                participation per game.
+                            </p>
+                            <p className={"text-sm mb-4"}>
+                                Current participation: {selectedParticipation?.id}
+                            </p>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline">
+                                        Change participation
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent className="w-56">
+                                    <DropdownMenuLabel>Participations</DropdownMenuLabel>
+                                    <DropdownMenuSeparator/>
+                                    <DropdownMenuGroup>
+                                        {participationData?.map((participation) => (
+                                            <DropdownMenuItem key={participation.id} onClick={() => {
+                                                setSelectedParticipation(participation)
+                                            }}>
+                                                <div className={"inline-flex justify-between flex-grow"}>
+                                                    <span>
+                                                        {participation.id.slice(0, 6)}...{participation.id.slice(-6)}
+                                                    </span>
+                                                    <span className={"font-semibold"}>
+                                                        {formatSuiAmount(participation.active_stake + participation.claimable_balance + participation.inactive_stake)}
+                                                    </span>
+                                                </div>
+                                            </DropdownMenuItem>
+                                        ))}
+                                    </DropdownMenuGroup>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </CardContent>}
                         <CardContent className={"p-6 border-b"}>
                             <p className={"font-semibold mb-2"}>
                                 Current position
@@ -378,8 +451,8 @@ export default function ManagePosition(props: ManagePositionProps) {
                                         Active stake
                                     </p>
                                     <div className={"inline-flex gap-2 items-center align-bottom"}>
-                                        {formatSuiAmount(participationData?.active_stake ? participationData.active_stake : 0)}
-                                        {participationData?.unstake_requested &&
+                                        {formatSuiAmount(selectedParticipation?.active_stake ?? 0)}
+                                        {(selectedParticipation?.unstake_requested ?? false) &&
                                             <span className={"text-destructive text-sm"}>(Unstaking)</span>}
                                     </div>
                                 </div>
@@ -388,7 +461,7 @@ export default function ManagePosition(props: ManagePositionProps) {
                                         Inactive stake
                                     </p>
                                     <p className={" "}>
-                                        {formatSuiAmount(participationData?.inactive_stake ? participationData.inactive_stake : 0)}
+                                        {formatSuiAmount(selectedParticipation?.inactive_stake ?? 0)}
                                     </p>
                                 </div>
                                 <div>
@@ -396,8 +469,9 @@ export default function ManagePosition(props: ManagePositionProps) {
                                         Claimable balance
                                     </p>
                                     <div className={"inline-flex gap-4 items-center align-bottom"}>
-                                        <span className={(participationData?.claimable_balance ?? 0) > 0 ? "text-green-700" : ""}>
-                                            {formatSuiAmount(participationData?.claimable_balance ? participationData.claimable_balance : 0)}
+                                        <span
+                                            className={(selectedParticipation?.claimable_balance ?? 0) > 0 ? "text-green-700" : ""}>
+                                            {formatSuiAmount(selectedParticipation?.claimable_balance ?? 0)}
                                         </span>
                                     </div>
                                 </div>
@@ -406,7 +480,7 @@ export default function ManagePosition(props: ManagePositionProps) {
                                         Last updated epoch
                                     </p>
                                     <p className={" "}>
-                                        {participationData?.last_updated_epoch ?? "N/A"}
+                                        {selectedParticipation?.last_updated_epoch ?? "N/A"}
                                     </p>
                                 </div>
                             </div>
@@ -427,7 +501,8 @@ export default function ManagePosition(props: ManagePositionProps) {
                             <p className={"text-sm mb-4"}>
                                 Current epoch: {epoch}
                             </p>
-                            <Button className={"w-fit"} variant={"outline"} disabled={loadingUpdate} onClick={handleUpdate}>
+                            <Button className={"w-fit"} variant={"outline"} disabled={loadingUpdate}
+                                    onClick={handleUpdate}>
                                 <ArrowPathIcon className={"w-6 h-6"} strokeWidth={2}/>
                                 Force Update
                             </Button>
