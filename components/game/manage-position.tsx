@@ -32,6 +32,7 @@ import {
     DropdownMenuSubTrigger,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import {useRouter} from "next/navigation";
 
 interface ManagePositionProps {
     game: GameData;
@@ -47,6 +48,7 @@ const stakeSchema = z.object({
 export default function ManagePosition(props: ManagePositionProps) {
     const {toast} = useToast();
     const {updateBalance} = useBalance();
+    const router = useRouter();
     const [loadingStake, setLoadingStake] = useState<boolean>(false);
     const [loadingUnstake, setLoadingUnstake] = useState<boolean>(false);
     const [loadingClaim, setLoadingClaim] = useState<boolean>(false);
@@ -154,6 +156,7 @@ export default function ManagePosition(props: ManagePositionProps) {
                         form.reset();
                         updateParticipationData();
                         updateBalance();
+                        router.refresh();
                     }).catch((error) => {
                         toast({
                             variant: "destructive",
@@ -237,6 +240,7 @@ export default function ManagePosition(props: ManagePositionProps) {
                         form.reset();
                         updateParticipationData();
                         updateBalance();
+                        router.refresh();
                     }).catch((error) => {
                         toast({
                             variant: "destructive",
@@ -293,6 +297,8 @@ export default function ManagePosition(props: ManagePositionProps) {
                         setLoadingUpdate(false);
                         updateParticipationData();
                         updateBalance();
+                        router.refresh();
+                        
                     }).catch((error) => {
                         toast({
                             variant: "destructive",
@@ -367,6 +373,8 @@ export default function ManagePosition(props: ManagePositionProps) {
                         setLoadingClaim(false);
                         updateParticipationData();
                         updateBalance();
+                        router.refresh();
+                        
                     }).catch((error) => {
                         toast({
                             variant: "destructive",

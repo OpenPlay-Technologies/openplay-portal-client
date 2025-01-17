@@ -99,7 +99,8 @@ export interface BalanceManagerData {
     id: string,
     balance: {
         value: number
-    }
+    },
+    allow_listed: string[]
 }
 
 export interface ParticipationData {
