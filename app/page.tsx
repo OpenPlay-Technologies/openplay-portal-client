@@ -1,5 +1,4 @@
 import React from "react";
-import {GameGrid} from "@/components/games/game-grid";
 import Banner from "@/components/nav/banner";
 
 export default function Home() {
@@ -17,7 +16,7 @@ export default function Home() {
             {/*<GameSlider title={"Coin Flip"}/>*/}
             {/*<GameSlider title={"Roulette"}/>*/}
             <Banner />
-            <GameGrid/>
+            {/*<GameGrid/>*/}
         </div>
 
     );

@@ -1,7 +1,7 @@
 ﻿
 import {getGraphQLClient} from "@/api/graphql-client";
 import { GET_PARTICIPATIONS} from "@/api/queries/sui-graphql-queries";
-import { ParticipationData} from "@/api/models/models";
+import {ParticipationModel} from "@/api/models/openplay-core";
 
 
 export const fetchAllParticipations = async (owner: string) => {
@@ -18,7 +18,7 @@ export const fetchAllParticipations = async (owner: string) => {
         throw new Error(`Data not found for participations`);
     }
     const balanceManagers = rawData?.map((node: any) => {
-        return node.contents.json as ParticipationData
+        return node.contents.json as ParticipationModel
     });
-    return balanceManagers as ParticipationData[];
+    return balanceManagers as ParticipationModel[];
 }

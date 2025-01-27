@@ -14,9 +14,9 @@ interface NavbarProps {
 }
 
 const navigationLinks = [
-    {name: "Games", href: "/"},
+    {name: "Home", href: "/"},
     {name: "Rewards", href: "/rewards"},
-    {name: "Create", href: "/create"},
+    {name: "Create", href: "/create/house"},
 ]
 
 export default function Navbar(props: NavbarProps) {

@@ -1,6 +1,6 @@
 ﻿import {getGraphQLClient} from "@/api/graphql-client";
 import {GET_BALANCE_MANAGERS} from "@/api/queries/sui-graphql-queries";
-import {BalanceManagerData} from "@/api/models/models";
+import {BalanceManagerModel} from "@/api/models/openplay-core";
 
 
 export const fetchAllBalanceManagers = async (owner: string) => {
@@ -17,7 +17,7 @@ export const fetchAllBalanceManagers = async (owner: string) => {
         throw new Error(`Data not found for balance managers`);
     }
     const balanceManagers = rawData?.map((node: any) => {
-        return node.contents.json as BalanceManagerData
+        return node.contents.json as BalanceManagerModel
     });
-    return balanceManagers as BalanceManagerData[];
+    return balanceManagers as BalanceManagerModel[];
 }

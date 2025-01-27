@@ -5,7 +5,6 @@ import {UserPenIcon} from "lucide-react";
 import {Input} from "@/components/ui/input";
 import {Button} from "@/components/ui/button";
 import React, {useCallback, useEffect, useState} from "react";
-import {GameData, ParticipationData} from "@/api/models/models";
 import {useCurrentAccount, useSignAndExecuteTransaction, useSuiClient} from "@mysten/dapp-kit";
 import {z} from "zod";
 import {useForm} from "react-hook-form";
@@ -24,18 +23,16 @@ import {
     DropdownMenuGroup,
     DropdownMenuItem,
     DropdownMenuLabel,
-    DropdownMenuPortal,
     DropdownMenuSeparator,
-    DropdownMenuShortcut,
-    DropdownMenuSub,
-    DropdownMenuSubContent,
-    DropdownMenuSubTrigger,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import {useRouter} from "next/navigation";
+import {fetchAllHouseAdminCaps} from "@/api/queries/house-cap";
+import Link from "next/link";
+import {HouseAdminCapModel, HouseModel, ParticipationModel} from "@/api/models/openplay-core";
 
 interface ManagePositionProps {
-    game: GameData;
+    house: HouseModel;
 }
 
 const stakeSchema = z.object({
@@ -54,7 +51,7 @@ export default function ManagePosition(props: ManagePositionProps) {
     const [loadingClaim, setLoadingClaim] = useState<boolean>(false);
     const [epoch, setEpoch] = useState<number | null>(null);
     const [loadingUpdate, setLoadingUpdate] = useState(false);
-    const packageId = process.env.NEXT_PUBLIC_PACKAGE_ID;
+    const packageId = process.env.NEXT_PUBLIC_CORE_PACKAGE_ID;
     const suiClient = useSuiClient();
     const {mutate: signAndExecuteTransaction} = useSignAndExecuteTransaction({
         execute: async ({bytes, signature}) =>
@@ -69,6 +66,21 @@ export default function ManagePosition(props: ManagePositionProps) {
                 },
             }),
     });
+    const account = useCurrentAccount();
+
+    // House caps
+    const [houseAdminCapData, setHouseAdminCapData] = useState<HouseAdminCapModel[]>([]);
+    const updateGameCapData = useCallback(async () => {
+        if (!account?.address) {
+            setHouseAdminCapData([]);
+            return;
+        }
+        const houseAdminCaps = await fetchAllHouseAdminCaps(account.address);
+        setHouseAdminCapData(houseAdminCaps);
+    }, [account]);
+    useEffect(() => {
+        updateGameCapData();
+    }, [updateGameCapData]);
 
     // Fetch the current epoch
     useEffect(() => {
@@ -85,18 +97,17 @@ export default function ManagePosition(props: ManagePositionProps) {
         resolver: zodResolver(stakeSchema)
     });
 
-    const account = useCurrentAccount();
-    const [participationData, setParticipationData] = useState<ParticipationData[] | null>([]);
-    const [selectedParticipation, setSelectedParticipation] = useState<ParticipationData | null>(null);
+    const [participationData, setParticipationData] = useState<ParticipationModel[] | null>([]);
+    const [selectedParticipation, setSelectedParticipation] = useState<ParticipationModel | null>(null);
     const updateParticipationData = useCallback(async () => {
         if (!account?.address) {
             return;
         }
         const participations = await fetchAllParticipations(account.address);
-        setParticipationData(participations.filter(p => p.game_id == props.game.id).sort(
+        setParticipationData(participations.filter(p => p.house_id == props.house.id).sort(
             (a, b) =>
-                (b.active_stake + b.inactive_stake + b.claimable_balance) -
-                (a.active_stake + a.inactive_stake + a.claimable_balance)
+                Number((b.active_stake + b.inactive_stake + b.claimable_balance) -
+                (a.active_stake + a.inactive_stake + a.claimable_balance))
         ));
         if (selectedParticipation == null && participations.length > 0) {
             setSelectedParticipation(participations[0]);
@@ -124,16 +135,16 @@ export default function ManagePosition(props: ManagePositionProps) {
 
         const tx = new Transaction();
         tx.moveCall({
-            target: `${packageId}::game::update_participation`,
+            target: `${packageId}::house::update_participation`,
             arguments: [
-                tx.object(props.game.id),
+                tx.object(props.house.id),
                 tx.object(selectedParticipation.id),
             ],
         });
         tx.moveCall({
-            target: `${packageId}::game::unstake`,
+            target: `${packageId}::house::unstake`,
             arguments: [
-                tx.object(props.game.id),
+                tx.object(props.house.id),
                 tx.object(selectedParticipation.id),
             ],
         });
@@ -190,19 +201,42 @@ export default function ManagePosition(props: ManagePositionProps) {
         
         let participationObj;
         if (!selectedParticipation) {
-            const [participation] = tx.moveCall({
-                target: `${packageId}::game::new_participation`,
-                arguments: [
-                    tx.object(props.game.id)
-                ],
-            });
-            participationObj = tx.object(participation);
+            // Private house needs to use the admin_new_participation instead
+            if (props.house.private) {
+                const adminCap = houseAdminCapData.find(cap => cap.house_id == props.house.id);
+                if (!adminCap) {
+                    toast({
+                        variant: "destructive",
+                        title: 'Participation failed',
+                        description: 'House admin cap not found',
+                    });
+                    return;
+                }
+                
+                const [participation] = tx.moveCall({
+                    target: `${packageId}::house::admin_new_participation`,
+                    arguments: [
+                        tx.object(props.house.id),
+                        tx.object(adminCap.id)
+                    ],
+                });
+                participationObj = tx.object(participation);
+            }
+            else {
+                const [participation] = tx.moveCall({
+                    target: `${packageId}::house::new_participation`,
+                    arguments: [
+                        tx.object(props.house.id)
+                    ],
+                });
+                participationObj = tx.object(participation);
+            }
         } else {
             participationObj = tx.object(selectedParticipation.id);
             tx.moveCall({
-                target: `${packageId}::game::update_participation`,
+                target: `${packageId}::house::update_participation`,
                 arguments: [
-                    tx.object(props.game.id),
+                    tx.object(props.house.id),
                     participationObj,
                 ],
             });
@@ -210,9 +244,9 @@ export default function ManagePosition(props: ManagePositionProps) {
 
         const [coin] = tx.splitCoins(tx.gas, [values.amount * 1e9]);
         tx.moveCall({
-            target: `${packageId}::game::stake`,
+            target: `${packageId}::house::stake`,
             arguments: [
-                tx.object(props.game.id),
+                tx.object(props.house.id),
                 participationObj,
                 tx.object(coin)
             ],
@@ -273,9 +307,9 @@ export default function ManagePosition(props: ManagePositionProps) {
         const tx = new Transaction();
 
         tx.moveCall({
-            target: `${packageId}::game::update_participation`,
+            target: `${packageId}::house::update_participation`,
             arguments: [
-                tx.object(selectedParticipation.game_id),
+                tx.object(selectedParticipation.house_id),
                 tx.object(selectedParticipation.id),
             ],
         });
@@ -331,22 +365,22 @@ export default function ManagePosition(props: ManagePositionProps) {
         const tx = new Transaction();
 
         tx.moveCall({
-            target: `${packageId}::game::update_participation`,
+            target: `${packageId}::house::update_participation`,
             arguments: [
-                tx.object(props.game.id),
+                tx.object(props.house.id),
                 tx.object(selectedParticipation.id),
             ],
         });
         const [coin] = tx.moveCall({
-            target: `${packageId}::game::claim_all`,
+            target: `${packageId}::house::claim_all`,
             arguments: [
-                tx.object(selectedParticipation.game_id),
+                tx.object(selectedParticipation.house_id),
                 tx.object(selectedParticipation.id),
             ],
         });
         tx.transferObjects([coin], account.address);
 
-        if (selectedParticipation.active_stake == 0 && selectedParticipation.inactive_stake == 0) {
+        if (selectedParticipation.active_stake == BigInt(0) && selectedParticipation.inactive_stake == BigInt(0)) {
             tx.moveCall({
                 target: `${packageId}::participation::destroy_empty`,
                 arguments: [
@@ -396,7 +430,29 @@ export default function ManagePosition(props: ManagePositionProps) {
 
     return (
         <div className="w-full pb-4">
-            <Card>
+            {props.house.private && !houseAdminCapData.find(cap => cap.house_id == props.house.id) && !selectedParticipation ?
+            <div>
+                <Card>
+                    <CardHeader className={"border-b"}>
+                        <div className={"font-semibold   inline-flex items-center"}>
+                            <UserPenIcon className={"w-6 h-6 mr-2"}/>
+                            Your Position
+                        </div>
+                    </CardHeader>
+                    <CardContent className={"p-6 flex flex-col gap-4"}>
+                        <p>This is a private house. You need to be the owner to manage your position.</p>
+                        <Link href={"/create/house"}>
+                            
+                        
+                        <Button>
+                            Create your own house
+                        </Button>
+                        </Link>
+                    </CardContent>
+                </Card>
+            </div>
+                :
+                <Card>
                 <CardHeader className={"border-b"}>
                     <div className={"font-semibold   inline-flex items-center"}>
                         <UserPenIcon className={"w-6 h-6 mr-2"}/>
@@ -440,7 +496,7 @@ export default function ManagePosition(props: ManagePositionProps) {
                                                         {participation.id.slice(0, 6)}...{participation.id.slice(-6)}
                                                     </span>
                                                     <span className={"font-semibold"}>
-                                                        {formatSuiAmount(participation.active_stake + participation.claimable_balance + participation.inactive_stake)}
+                                                        {formatSuiAmount(Number(participation.active_stake + participation.claimable_balance + participation.inactive_stake))}
                                                     </span>
                                                 </div>
                                             </DropdownMenuItem>
@@ -459,7 +515,7 @@ export default function ManagePosition(props: ManagePositionProps) {
                                         Active stake
                                     </p>
                                     <div className={"inline-flex gap-2 items-center align-bottom"}>
-                                        {formatSuiAmount(selectedParticipation?.active_stake ?? 0)}
+                                        {formatSuiAmount(Number(selectedParticipation?.active_stake ?? 0))}
                                         {(selectedParticipation?.unstake_requested ?? false) &&
                                             <span className={"text-destructive text-sm"}>(Unstaking)</span>}
                                     </div>
@@ -469,7 +525,7 @@ export default function ManagePosition(props: ManagePositionProps) {
                                         Inactive stake
                                     </p>
                                     <p className={" "}>
-                                        {formatSuiAmount(selectedParticipation?.inactive_stake ?? 0)}
+                                        {formatSuiAmount(Number(selectedParticipation?.inactive_stake ?? 0))}
                                     </p>
                                 </div>
                                 <div>
@@ -479,7 +535,7 @@ export default function ManagePosition(props: ManagePositionProps) {
                                     <div className={"inline-flex gap-4 items-center align-bottom"}>
                                         <span
                                             className={(selectedParticipation?.claimable_balance ?? 0) > 0 ? "text-green-700" : ""}>
-                                            {formatSuiAmount(selectedParticipation?.claimable_balance ?? 0)}
+                                            {formatSuiAmount(Number(selectedParticipation?.claimable_balance ?? 0))}
                                         </span>
                                     </div>
                                 </div>
@@ -583,6 +639,7 @@ export default function ManagePosition(props: ManagePositionProps) {
                     </>
                 )}
             </Card>
+            }
         </div>
 
     );

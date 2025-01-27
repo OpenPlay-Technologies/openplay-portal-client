@@ -1,41 +1,41 @@
-﻿import {GameCapData, GameData} from "@/api/models/models";
-import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table";
+﻿import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table";
 import {Button} from "@/components/ui/button";
 import {CardContent} from "@/components/ui/card";
 import {useCallback, useEffect, useState} from "react";
-import {fetchGamesByIds} from "@/api/queries/games";
+import {fetchHousesByIds} from "@/api/queries/house";
 import {useCurrentAccount, useSignAndExecuteTransaction, useSuiClient} from "@mysten/dapp-kit";
 import {formatSuiAmount} from "@/lib/utils";
 import Link from "next/link";
 import {Transaction} from "@mysten/sui/transactions";
 import {useToast} from "@/hooks/use-toast";
 import {useBalance} from "@/components/providers/balance-provider";
+import {HouseAdminCapModel, HouseModel} from "@/api/models/openplay-core";
 
 interface GameOwnerRewardsProps {
-    gameCapData: GameCapData[];
+    houseAdminCapData: HouseAdminCapModel[];
     updateGameCapData: () => void;
 }
 
-export default function GameOwnerRewards(props: GameOwnerRewardsProps) {
-    const [gameData, setGameData] = useState<Record<string, GameData>>({});
+export default function HouseOwnerRewards(props: GameOwnerRewardsProps) {
+    const [houseData, setHouseData] = useState<Record<string, HouseModel>>({});
     const account = useCurrentAccount();
-    const packageId = process.env.NEXT_PUBLIC_PACKAGE_ID;
+    const packageId = process.env.NEXT_PUBLIC_CORE_PACKAGE_ID;
     const suiClient = useSuiClient();
     const [loadingClaim, setLoadingClaim] = useState(false);
     const { toast } = useToast();
     const {updateBalance} = useBalance();
 
     // Fetch the game data for the caps
-    const updateGameData = useCallback(async () => {
+    const updateHouseData = useCallback(async () => {
         if (!account?.address) {
             return;
         }
-        const gameData = await fetchGamesByIds(props.gameCapData.map(cap => cap.game_id));
-        setGameData(gameData);
-    }, [props.gameCapData]);
+        const houseData = await fetchHousesByIds(props.houseAdminCapData.map(cap => cap.house_id));
+        setHouseData(houseData);
+    }, [props.houseAdminCapData]);
     useEffect(() => {
-        updateGameData();
-    }, [updateGameData]);
+        updateHouseData();
+    }, [updateHouseData]);
 
     const {mutate: signAndExecuteTransaction} = useSignAndExecuteTransaction({
         execute: async ({bytes, signature}) =>
@@ -52,7 +52,7 @@ export default function GameOwnerRewards(props: GameOwnerRewardsProps) {
     });
 
     // Claim
-    async function handleClaim(cap: GameCapData) {
+    async function handleClaim(cap: HouseAdminCapModel) {
         if (!account) {
             console.error('Account not found');
             return;
@@ -61,9 +61,9 @@ export default function GameOwnerRewards(props: GameOwnerRewardsProps) {
         const tx = new Transaction();
 
         const [coin] = tx.moveCall({
-            target: `${packageId}::game::claim_all_fees`,
+            target: `${packageId}::game::admin_claim_game_fees`,
             arguments: [
-                tx.object(cap.game_id),
+                tx.object(cap.house_id),
                 tx.object(cap.id),
             ],
         });
@@ -110,31 +110,27 @@ export default function GameOwnerRewards(props: GameOwnerRewardsProps) {
             <Table>
                 <TableHeader>
                     <TableRow>
-                        <TableHead>Game</TableHead>
+                        <TableHead>House ID</TableHead>
                         <TableHead>Collected Fees</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {props.gameCapData.map((cap) => {
-                            const game = gameData[cap.game_id];
-                            if (!game) {
+                    {props.houseAdminCapData.map((cap) => {
+                            const house = houseData[cap.house_id];
+                            if (!house) {
                                 return null;
                             }
                             return (
-                                <TableRow key={game.id}>
+                                <TableRow key={house.id}>
                                     <TableCell>
-                                        <div className={"inline-flex items-center gap-4"}>
-                                            <img className={"aspect-square h-14"} src={game.image_url}
-                                                 alt={game.name + "-image"}/>
-                                            <span>{game.name}</span>
-                                        </div>
+                                        {house.id}
                                     </TableCell>
                                     <TableCell>
                                         <div className={"inline-flex gap-2 items-center"}>
                                             <span
-                                                className={game.vault.collected_owner_fees.value > 0 ? "text-green-700" : ""}
-                                            >{formatSuiAmount(game.vault.collected_owner_fees.value)}</span>
-                                            {game.vault.collected_owner_fees.value > 0 &&
+                                                className={house.vault.collected_house_fees.value > 0 ? "text-green-700" : ""}
+                                            >{formatSuiAmount(house.vault.collected_house_fees.value)}</span>
+                                            {house.vault.collected_house_fees.value > 0 &&
                                                 <Button disabled={loadingClaim} variant={"outline"} onClick={() => {
                                                     handleClaim(cap)
                                                 }}>
@@ -144,7 +140,7 @@ export default function GameOwnerRewards(props: GameOwnerRewardsProps) {
                                         </div>
                                     </TableCell>
                                     <TableCell>
-                                        <Link href={`/game/${game.id}`}>
+                                        <Link href={`/house/${house.id}`}>
                                             <span className="underline font-semibold">See more</span>
                                         </Link>
                                     </TableCell>

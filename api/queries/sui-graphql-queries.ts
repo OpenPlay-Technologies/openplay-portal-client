@@ -1,6 +1,6 @@
 ﻿import {graphql} from '@mysten/sui/graphql/schemas/2024.4';
 
-const packageId = process.env.NEXT_PUBLIC_PACKAGE_ID;
+const packageId = process.env.NEXT_PUBLIC_CORE_PACKAGE_ID;
 
 export const GET_ACCOUNT_BALANCE = graphql(`
     query ($address: String!) {
@@ -33,6 +33,28 @@ export const GET_MOVE_OBJECT_CONTENTS = graphql(`
             asMoveObject {
                 contents {
                     json
+                }
+            }
+        }
+    }
+`);
+
+export const GET_OBJECT_OWNER = graphql(`
+    query ($objectId: String!) {
+        object(
+            address: $objectId
+        ) {
+            owner {
+                __typename
+                ... on AddressOwner {
+                    owner {
+                        address
+                    }
+                }
+                ... on Parent {
+                    parent {
+                        address
+                    }
                 }
             }
         }
@@ -75,12 +97,30 @@ export const GET_PARTICIPATIONS = graphql(`
     }
 `);
 
-export const GET_GAME_CAPS = graphql(`
+export const GET_HOUSE_ADMIN_CAPS = graphql(`
     query ($address: String!) {
         address(
             address: $address
         ) {
-            objects(filter: { type: "${packageId + "::game" + "::GameCap"}" }) {
+            objects(filter: { type: "${packageId + "::house" + "::HouseAdminCap"}" }) {
+                nodes {
+                    address
+                    digest
+                    contents {
+                        json
+                    }
+                }
+            }
+        }
+    }
+`);
+
+export const GET_REFERRAL_CAPS = graphql(`
+    query ($address: String!) {
+        address(
+            address: $address
+        ) {
+            objects(filter: { type: "${packageId + "::referral" + "::ReferralCap"}" }) {
                 nodes {
                     address
                     digest
@@ -100,7 +140,9 @@ export const GET_REGISTRY = graphql(`
                 address
                 digest
                 asMoveObject {
-                    contents { json }
+                    contents { 
+                        json
+                    }
                 }
             }
         }

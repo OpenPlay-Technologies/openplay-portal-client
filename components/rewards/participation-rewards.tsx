@@ -5,22 +5,22 @@ import { ArrowPathIcon} from "@heroicons/react/24/outline";
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table";
 import Link from "next/link";
 import {useCallback, useEffect, useState} from "react";
-import {GameData, ParticipationData} from "@/api/models/models";
 import {getCurrentEpoch} from "@/api/queries/epoch";
-import {fetchGamesByIds} from "@/api/queries/games";
+import {fetchHousesByIds} from "@/api/queries/house";
 import {useCurrentAccount, useSignAndExecuteTransaction, useSuiClient} from "@mysten/dapp-kit";
 import {Transaction} from "@mysten/sui/transactions";
 import {formatSuiAmount} from "@/lib/utils";
 import {useToast} from "@/hooks/use-toast";
+import {HouseModel, ParticipationModel} from "@/api/models/openplay-core";
 
 interface ParticipationRewardsProps {
-    participationData: ParticipationData[];
+    participationData: ParticipationModel[];
     updateParticipationData: () => void;
 }
 
 export default function ParticipationRewards(props: ParticipationRewardsProps) {
     const { toast } = useToast();
-    const packageId = process.env.NEXT_PUBLIC_PACKAGE_ID;
+    const packageId = process.env.NEXT_PUBLIC_CORE_PACKAGE_ID;
     const account = useCurrentAccount();
     const suiClient = useSuiClient();
     const {mutate: signAndExecuteTransaction} = useSignAndExecuteTransaction({
@@ -36,7 +36,7 @@ export default function ParticipationRewards(props: ParticipationRewardsProps) {
                 },
             }),
     });
-    const [gameData, setGameData] = useState<Record<string, GameData>>({});
+    const [houseData, setHouseData] = useState<Record<string, HouseModel>>({});
     const [epoch, setEpoch] = useState<number | null>(null);
     const [loadingUpdate, setLoadingUpdate] = useState(false);
     const [loadingClaim, setLoadingClaim] = useState(false);
@@ -52,16 +52,16 @@ export default function ParticipationRewards(props: ParticipationRewardsProps) {
     }, []);
 
     // Fetch the game data for the participations
-    const updateGameData = useCallback(async () => {
+    const updateHouseData = useCallback(async () => {
         if (!account?.address) {
             return;
         }
-        const gameData = await fetchGamesByIds(props.participationData.map(participation => participation.game_id));
-        setGameData(gameData);
+        const houseData = await fetchHousesByIds(props.participationData.map(participation => participation.house_id));
+        setHouseData(houseData);
     }, [props.participationData]);
     useEffect(() => {
-        updateGameData();
-    }, [updateGameData]);
+        updateHouseData();
+    }, [updateHouseData]);
 
     // Update the participations
     async function handleUpdateAll() {
@@ -75,9 +75,9 @@ export default function ParticipationRewards(props: ParticipationRewardsProps) {
 
         props.participationData.map(p => {
             tx.moveCall({
-                target: `${packageId}::game::update_participation`,
+                target: `${packageId}::house::update_participation`,
                 arguments: [
-                    tx.object(p.game_id),
+                    tx.object(p.house_id),
                     tx.object(p.id),
                 ],
             });
@@ -118,7 +118,7 @@ export default function ParticipationRewards(props: ParticipationRewardsProps) {
     }
 
     // Claim
-    async function handleClaim(participation: ParticipationData) {
+    async function handleClaim(participation: ParticipationModel) {
         if (!account) {
             console.error('Account not found');
             return;
@@ -126,22 +126,22 @@ export default function ParticipationRewards(props: ParticipationRewardsProps) {
 
         const tx = new Transaction();
         tx.moveCall({
-            target: `${packageId}::game::update_participation`,
+            target: `${packageId}::house::update_participation`,
             arguments: [
-                tx.object(participation.game_id),
+                tx.object(participation.house_id),
                 tx.object(participation.id),
             ],
         });
         const [coin] = tx.moveCall({
-            target: `${packageId}::game::claim_all`,
+            target: `${packageId}::house::claim_all`,
             arguments: [
-                tx.object(participation.game_id),
+                tx.object(participation.house_id),
                 tx.object(participation.id),
             ],
         });
         tx.transferObjects([coin], account.address);
         
-        if (participation.active_stake == 0 && participation.inactive_stake == 0) {
+        if (participation.active_stake == BigInt(0) && participation.inactive_stake == BigInt(0)) {
             tx.moveCall({
                 target: `${packageId}::participation::destroy_empty`,
                 arguments: [
@@ -209,7 +209,7 @@ export default function ParticipationRewards(props: ParticipationRewardsProps) {
             <Table className={"mb-4"}>
                 <TableHeader>
                     <TableRow>
-                        <TableHead>Game</TableHead>
+                        <TableHead>House</TableHead>
                         <TableHead>Last updated epoch</TableHead>
                         <TableHead>Active Stake</TableHead>
                         <TableHead>Inactive stake</TableHead>
@@ -219,37 +219,33 @@ export default function ParticipationRewards(props: ParticipationRewardsProps) {
                 </TableHeader>
                 <TableBody>
                     {props.participationData.map((participation) => {
-                        const game = gameData[participation.game_id];
-                        if (!game) {
+                        const house = houseData[participation.house_id];
+                        if (!house) {
                             return null;
                         }
                         return (
                             <TableRow key={participation.id}>
                                 <TableCell>
-                                    <div className={"inline-flex items-center gap-4"}>
-                                        <img className={"aspect-square h-14"} src={game.image_url}
-                                             alt={game.name + "-image"}/>
-                                        <span>{game.name}</span>
-                                    </div>
+                                    {house.id}
                                 </TableCell>
                                 <TableCell>
                                     {participation.last_updated_epoch ?? 'N/A'}
                                 </TableCell>
                                 <TableCell>
                                     <div className={"inline-flex gap-2 items-center align-bottom"}>
-                                        {formatSuiAmount(participation.active_stake)}
+                                        {formatSuiAmount(Number(participation.active_stake))}
                                         {participation.unstake_requested &&
                                             <span className={"text-destructive text-sm"}>(Unstaking)</span>}
                                     </div>
                                 </TableCell>
                                 <TableCell>
-                                    {formatSuiAmount(participation.inactive_stake)}
+                                    {formatSuiAmount(Number(participation.inactive_stake))}
                                 </TableCell>
                                 <TableCell>
                                     <div className={"inline-flex gap-2 items-center"}>
                                         <span
                                             className={participation.claimable_balance > -0 ? "text-green-700" : ""}
-                                        >{formatSuiAmount(participation.claimable_balance)}</span>
+                                        >{formatSuiAmount(Number(participation.claimable_balance))}</span>
                                         {participation.claimable_balance > -0 &&
                                             <Button variant={"outline"} onClick={() => {
                                                 handleClaim(participation)
@@ -261,7 +257,7 @@ export default function ParticipationRewards(props: ParticipationRewardsProps) {
 
                                 </TableCell>
                                 <TableCell>
-                                    <Link href={`/game/${game.id}`}>
+                                    <Link href={`/house/${house.id}`}>
                                         <span className="underline font-semibold">See more</span>
                                     </Link>
                                 </TableCell>
