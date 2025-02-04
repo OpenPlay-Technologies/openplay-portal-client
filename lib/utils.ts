@@ -13,3 +13,7 @@ export function formatSuiAmount(amount: number) {
 export function formatBps(bps: number) {
   return (bps / 100).toFixed(2) + "%"
 }
+
+export function mistToSUI(mist: number) {
+  return (mist / 1e9).toFixed(2)
+}

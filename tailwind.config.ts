@@ -9,6 +9,12 @@ export default {
     ],
     theme: {
         extend: {
+            screens: {
+                'xs': '480px',
+            },
+            boxShadow: {
+                glow: '0 0 10px 5px rgba(255, 255, 255, 0.3)',
+            },
             keyframes: {
                 progress: {
                     "0%": {
@@ -73,7 +79,8 @@ export default {
                     '4': 'hsl(var(--chart-4))',
                     '5': 'hsl(var(--chart-5))'
                 },
-                openplay: '#fa1768'
+                openplay1: '#fd9248',
+                openplay2: '#fa1768',
             },
             borderRadius: {
                 lg: 'var(--radius)',

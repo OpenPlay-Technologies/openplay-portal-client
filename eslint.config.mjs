@@ -28,7 +28,7 @@ const eslintConfig = [
 
       "react/no-unescaped-entities": "error",
     },
-    ignores: ["**/*.svg"], // Ignore all .svg files
+    ignores: ["**/*.svg", "**/sui-graphql-queries.ts" ], // Ignore all .svg files
   },
 ];
 

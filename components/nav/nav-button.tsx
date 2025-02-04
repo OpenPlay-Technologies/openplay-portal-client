@@ -25,8 +25,8 @@ const NavButton: React.FC<ButtonProps> = ({
             className={cn(
                 "h-auto inline-flex gap-2 p-2 border-transparent rounded-lg backdrop-blur-3xl items-center cursor-pointer",
                 light
-                    ? "bg-background/20 text-primary-foreground hover:bg-background/30"
-                    : "bg-foreground/5 text-foreground hover:bg-foreground/10",
+                    ? "bg-background/30 text-primary-foreground hover:bg-background/40"
+                    : "bg-foreground/10 text-foreground hover:bg-foreground/20",
                 className
             )}
         >

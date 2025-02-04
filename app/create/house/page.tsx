@@ -17,7 +17,6 @@ import {
     FormLabel,
     FormMessage
 } from "@/components/ui/form";
-import "@uploadcare/react-uploader/core.css";
 import {useCurrentAccount, useSignAndExecuteTransaction, useSuiClient} from "@mysten/dapp-kit";
 import {Transaction} from '@mysten/sui/transactions';
 import {fetchRegistry} from "@/api/queries/registry";

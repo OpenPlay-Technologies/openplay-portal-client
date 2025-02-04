@@ -128,7 +128,7 @@ export default function HouseOwnerRewards(props: GameOwnerRewardsProps) {
                                     <TableCell>
                                         <div className={"inline-flex gap-2 items-center"}>
                                             <span
-                                                className={house.vault.collected_house_fees.value > 0 ? "text-green-700" : ""}
+                                                className={house.vault.collected_house_fees.value > 0 ? "text-green-600" : ""}
                                             >{formatSuiAmount(house.vault.collected_house_fees.value)}</span>
                                             {house.vault.collected_house_fees.value > 0 &&
                                                 <Button disabled={loadingClaim} variant={"outline"} onClick={() => {

@@ -1,6 +1,6 @@
 ﻿import {Card, CardContent, CardHeader} from "@/components/ui/card";
 import {ActivityIcon, CheckIcon, CoinsIcon, LandmarkIcon, XIcon} from "lucide-react";
-import {ListBulletIcon, TagIcon} from "@heroicons/react/24/outline";
+import {ListBulletIcon} from "@heroicons/react/24/outline";
 import {formatBps, formatSuiAmount} from "@/lib/utils";
 import React from "react";
 import {fetchHouse} from "@/api/queries/house";
@@ -116,9 +116,9 @@ export default async function GameDetails({params}: { params: { houseId: string 
                                     </p>
                                     <p className={" "}>
                                         {house.vault.active ?
-                                            <CheckIcon className={"w-6 h-6 text-green-500"} strokeWidth={2}/>
+                                            <CheckIcon className={"w-6 h-6 text-green-600"} strokeWidth={2}/>
                                             :
-                                            <XIcon className={"w-6 h-6 text-red-500"} strokeWidth={2}/>
+                                            <XIcon className={"w-6 h-6 text-red-600"} strokeWidth={2}/>
                                         }
                                     </p>
                                 </div>
@@ -256,14 +256,10 @@ export default async function GameDetails({params}: { params: { houseId: string 
                                     <p className={"text-muted-foreground text-sm"}>
                                         Distributed profits / losses
                                     </p>
-                                    <p>{house.state.history.all_time_profits}</p>
-                                    <p>{house.state.history.all_time_losses}</p>
                                     <p className={
-                                        house.state.history.all_time_profits === house.state.history.all_time_losses 
-                                            ? "" :
                                             (house.state.history.all_time_profits > house.state.history.all_time_losses) 
-                                                ? "text-green-500" :
-                                            "text-red-500"}>
+                                                ? "text-green-600" :
+                                            "text-red-600"}>
                                         {formatSuiAmount(Number(house.state.history.all_time_profits - house.state.history.all_time_losses))}
                                     </p>
                                 </div>

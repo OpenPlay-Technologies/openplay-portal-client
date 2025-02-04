@@ -1,24 +1,13 @@
-import React from "react";
 import Banner from "@/components/nav/banner";
+import React from "react";
+import CoinFlipSlider from "@/components/games/coin-flip-slider";
 
-export default function Home() {
+export default function GamesPage() {
     return (
         <div>
-            {/*<div className={"relative mt-[-100px] pt-[100px] overflow-hidden flex flex-col w-full"}>*/}
-            {/*    <div*/}
-            {/*        className="absolute inset-0 w-full h-full bg-[url('/coinflip-banner.jpg')] bg-cover bg-center filter blur-2xl scale-110"></div>*/}
-            {/*    <div*/}
-            {/*        className="absolute inset-0 w-full h-full bg-gradient-to-b from-black to-black/0 via-black/20 via-30%"></div>*/}
-            {/*    <div*/}
-            {/*        className="absolute bottom-0 w-full h-full bg-gradient-to-b from-transparent to-background"></div>*/}
-            {/*    <FeaturedGames/>*/}
-            {/*</div>*/}
-            {/*<GameSlider title={"Coin Flip"}/>*/}
-            {/*<GameSlider title={"Roulette"}/>*/}
             <Banner />
-            {/*<GameGrid/>*/}
+            {/*<CoinFlipGrid />*/}
+            <CoinFlipSlider title={"Coin Flip"} />
         </div>
-
     );
 }
-

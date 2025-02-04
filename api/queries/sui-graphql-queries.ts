@@ -1,6 +1,9 @@
-﻿import {graphql} from '@mysten/sui/graphql/schemas/2024.4';
+﻿/* eslint-disable */
 
-const packageId = process.env.NEXT_PUBLIC_CORE_PACKAGE_ID;
+import {graphql} from '@mysten/sui/graphql/schemas/2024.4';
+
+const corePackageId = process.env.NEXT_PUBLIC_CORE_PACKAGE_ID;
+const coinFlipPackageId = process.env.NEXT_PUBLIC_COIN_FLIP_PACKAGE_ID;
 
 export const GET_ACCOUNT_BALANCE = graphql(`
     query ($address: String!) {
@@ -66,7 +69,7 @@ export const GET_BALANCE_MANAGERS = graphql(`
         address(
             address: $address
         ) {
-            objects(filter: { type: "${packageId + "::balance_manager" + "::BalanceManager"}" }) {
+            objects(filter: { type: "${corePackageId + "::balance_manager" + "::BalanceManager"}" }) {
                 nodes {
                     address
                     digest
@@ -84,7 +87,7 @@ export const GET_PARTICIPATIONS = graphql(`
         address(
             address: $address
         ) {
-            objects(filter: { type: "${packageId + "::participation" + "::Participation"}" }) {
+            objects(filter: { type: "${corePackageId + "::participation" + "::Participation"}" }) {
                 nodes {
                     address
                     digest
@@ -102,7 +105,7 @@ export const GET_HOUSE_ADMIN_CAPS = graphql(`
         address(
             address: $address
         ) {
-            objects(filter: { type: "${packageId + "::house" + "::HouseAdminCap"}" }) {
+            objects(filter: { type: "${corePackageId + "::house" + "::HouseAdminCap"}" }) {
                 nodes {
                     address
                     digest
@@ -120,7 +123,7 @@ export const GET_REFERRAL_CAPS = graphql(`
         address(
             address: $address
         ) {
-            objects(filter: { type: "${packageId + "::referral" + "::ReferralCap"}" }) {
+            objects(filter: { type: "${corePackageId + "::referral" + "::ReferralCap"}" }) {
                 nodes {
                     address
                     digest
@@ -135,12 +138,12 @@ export const GET_REFERRAL_CAPS = graphql(`
 
 export const GET_REGISTRY = graphql(`
     query {
-        objects(filter: { type: "${packageId + "::registry" + "::Registry"}" }) {
+        objects(filter: { type: "${corePackageId + "::registry" + "::Registry"}" }) {
             nodes {
                 address
                 digest
                 asMoveObject {
-                    contents { 
+                    contents {
                         json
                     }
                 }
@@ -173,5 +176,85 @@ export const GET_DYNAMIC_VALUE = graphql(`
             repr
         }
         json
+    }
+`);
+
+export const GET_BALANCE_MANAGER_CAPS = graphql(`
+    query ($owner: String!) {
+        address(
+            address: $owner
+        ) {
+            objects(filter: { type: "${corePackageId+ "::balance_manager" + "::BalanceManagerCap"}" }) {
+                nodes {
+                    address
+                    digest
+                    contents {
+                        json
+                    }
+                }
+            }
+        }
+    }
+`);
+
+export const GET_PLAY_CAPS = graphql(`
+    query ($owner: String!) {
+        address(
+            address: $owner
+        ) {
+            objects(filter: { type: "${corePackageId+ "::balance_manager" + "::PlayCap"}" }) {
+                nodes {
+                    address
+                    digest
+                    contents {
+                        json
+                    }
+                }
+            }
+        }
+    }
+`);
+export const GET_ALL_COIN_FLIPS = graphql(`
+    query {
+        objects(filter: { type: "${coinFlipPackageId + "::game" + "::Game"}" }) {
+            nodes {
+                address
+                digest
+                asMoveObject {
+                    contents { json }
+                }
+            }
+        }
+    }
+`);
+
+export const GET_RECENT_COIN_FLIP_TRANSACTIONS = graphql(`
+    query {
+        transactionBlocks(
+            last: 10,
+            filter: {
+                function: "${coinFlipPackageId + "::game" + "::interact"}"
+            }
+        ) {
+            nodes {
+                digest
+                sender {
+                    address
+                }
+                effects {
+                    events {
+                        nodes {
+                            timestamp
+                            contents {
+                                json
+                                type {
+                                    repr
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 `);

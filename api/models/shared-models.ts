@@ -1,4 +1,6 @@
-﻿export interface Balance {
+﻿import {TransactionEffects} from "@mysten/sui/client";
+
+export interface Balance {
     value: number
 }
 
@@ -15,8 +17,13 @@ export interface VecMap<TKey, TValue> {
     contents: Map<TKey, TValue>
 }
 
+export interface Sender {
+    address: string
+}
+
 export interface ObjectData {
     address: string;
     version: number;
     digest: string;
 }
+    

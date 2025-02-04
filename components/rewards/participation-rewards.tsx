@@ -244,7 +244,7 @@ export default function ParticipationRewards(props: ParticipationRewardsProps) {
                                 <TableCell>
                                     <div className={"inline-flex gap-2 items-center"}>
                                         <span
-                                            className={participation.claimable_balance > -0 ? "text-green-700" : ""}
+                                            className={participation.claimable_balance > -0 ? "text-green-600" : ""}
                                         >{formatSuiAmount(Number(participation.claimable_balance))}</span>
                                         {participation.claimable_balance > -0 &&
                                             <Button variant={"outline"} onClick={() => {

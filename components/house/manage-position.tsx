@@ -534,7 +534,7 @@ export default function ManagePosition(props: ManagePositionProps) {
                                     </p>
                                     <div className={"inline-flex gap-4 items-center align-bottom"}>
                                         <span
-                                            className={(selectedParticipation?.claimable_balance ?? 0) > 0 ? "text-green-700" : ""}>
+                                            className={(selectedParticipation?.claimable_balance ?? 0) > 0 ? "text-green-600" : ""}>
                                             {formatSuiAmount(Number(selectedParticipation?.claimable_balance ?? 0))}
                                         </span>
                                     </div>
