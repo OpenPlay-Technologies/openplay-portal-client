@@ -113,7 +113,7 @@ export default function ManagePosition(props: ManagePositionProps) {
         } else {
             setSelectedParticipation(filiteredParticipations.find(p => p.id.id == selectedParticipation?.id.id) ?? null);
         }
-    }, [account.address, props.house.id.id, selectedParticipation?.id.id]);
+    }, [account?.address, props.house.id.id, selectedParticipation?.id.id]);
 
     useEffect(() => {
         updateParticipationData();
