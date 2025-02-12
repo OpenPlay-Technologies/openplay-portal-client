@@ -9,7 +9,9 @@ import ClientCopyIcon from "@/components/ui/client-copy-icon";
 import ManageTxCaps from "@/components/house/manage-tx-caps";
 import ManagePosition from "@/components/house/manage-position";
 
-export default async function GameDetails({params}: { params: { houseId: string } }) {
+type Params = Promise<{ houseId: string }>
+
+export default async function GameDetails({params}: { params: Params }) {
     const {houseId} = await params;
     const house = await fetchHouse(houseId);
     if (!house) {
