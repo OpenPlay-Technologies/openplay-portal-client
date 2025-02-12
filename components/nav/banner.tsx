@@ -1,17 +1,60 @@
-﻿import {cn} from "@/lib/utils";
+﻿'use client';
+import { useState, useRef, useEffect, useCallback } from "react";
+import {cn} from "@/lib/utils";
 
 export default function Banner() {
+    const videoRef = useRef<HTMLVideoElement>(null);
+    // This state controls whether the video element is visible.
+    // If playback fails (e.g. due to a NotAllowedError), we hide the video.
+    const [isVideoHidden, setIsVideoHidden] = useState(false);
+
+    // This function resets the video and tries to play it.
+    // If playing fails because of browser restrictions, we hide the video.
+    const playVideo = useCallback(async () => {
+        if (!videoRef.current) return;
+        try {
+            videoRef.current.currentTime = 0;
+            await videoRef.current.play();
+            setIsVideoHidden(false);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (error: any) {
+            if (error?.name === "NotAllowedError") {
+                // Video playback is not allowed (e.g. on iPhone Safari);
+                // hide the video so that the poster is used instead.
+                setIsVideoHidden(true);
+            }
+        }
+    }, []);
+
+    // Try to play the video as soon as the component mounts.
+    useEffect(() => {
+        if (videoRef.current) {
+            playVideo();
+        }
+    }, [playVideo]);
+    
     return (
         <div>
             <div className="relative w-full h-[350px] bg-muted bg-cover bg-center border-b">
-                {/* Video Background */}
-                <video
-                    className="absolute top-0 left-0 w-full h-full object-cover pointer-events-none z-0"
-                    src="/banner-video.mp4"
-                    autoPlay
-                    loop
-                    muted
-                ></video>
+                {/* Video Background or Poster Fallback */}
+                {!isVideoHidden ? (
+                    <video
+                        ref={videoRef}
+                        onLoadedData={playVideo}
+                        className="absolute top-0 left-0 w-full h-full object-cover pointer-events-none z-0"
+                        src="/banner-video.mp4"
+                        loop
+                        muted
+                        playsInline
+                        poster="/banner-poster-min.webp"
+                    ></video>
+                ) : (
+                    // If the video can't play, show the poster image as a background.
+                    <div
+                        className="absolute top-0 left-0 w-full h-full bg-cover bg-center pointer-events-none z-0"
+                        style={{ backgroundImage: "url('/banner-poster-min.webp')" }}
+                    />
+                )}
 
                 {/* Dark Overlay */}
                 <div className="absolute top-0 left-0 w-full h-full bg-black bg-opacity-40 z-5"></div>

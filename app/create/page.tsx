@@ -6,7 +6,7 @@ import React from "react";
 export default function CreateGamePage() {
     return (
 
-        <Card className="w-1/2 w-lg min-w-72">
+        <Card className="w-1/2 w-lg min-w-fit min-h-fit">
             <CardHeader>
                 <h1 className={"text-2xl font-semibold"}>
                     Create

@@ -1,21 +1,42 @@
-﻿import {fetchRegistry} from "@/api/queries/registry";
-import {getGraphQLClient} from "@/api/graphql-client";
-import {GET_MOVE_OBJECT_CONTENTS, GET_OBJECT_OWNER} from "@/api/queries/sui-graphql-queries";
+﻿"use server"
+import {fetchRegistry} from "@/api/queries/registry";
+import {getSuiClient} from "@/api/sui-client";
 import {HouseModel} from "@/api/models/openplay-core";
 
 
-export const fetchHouse = async (houseId: string): Promise<HouseModel | undefined> => {
-    const graphqlClient = getGraphQLClient();
-    const result = await graphqlClient.query({
-        query: GET_MOVE_OBJECT_CONTENTS,
-        variables: {
-            address: houseId,
-        },
-    });
+// export const fetchHouse = async (houseId: string): Promise<HouseModel | undefined> => {
+//     const graphqlClient = getGraphQLClient();
+//     const result = await graphqlClient.query({
+//         query: GET_MOVE_OBJECT_CONTENTS,
+//         variables: {
+//             address: houseId,
+//         },
+//     });
+//
+//     const rawData = result?.data?.object?.asMoveObject?.contents?.json;
+//     return rawData as HouseModel;
+// }
 
-    const rawData = result?.data?.object?.asMoveObject?.contents?.json;
-    console.log(rawData);
-    return rawData as HouseModel;
+export const fetchHouse = async (houseId: string): Promise<HouseModel | undefined> => {
+    const client = getSuiClient();
+
+    try {
+        let response = await client.getObject({
+            id: houseId,
+            options: {
+                showContent: true
+            }
+        });
+        if (response.data?.content?.dataType === "moveObject") {
+            console.log(response.data.content.fields);
+            // @ts-ignore
+            return response.data.content.fields as HouseModel;
+        }
+    }
+    catch (error) {
+        console.error("Error fetching registry", error);
+    }
+    return undefined;
 }
 
 export const fetchAllHouses = async (): Promise<HouseModel[]> => {
@@ -27,42 +48,36 @@ export const fetchAllHouses = async (): Promise<HouseModel[]> => {
     return data.filter((house) => house !== undefined) as HouseModel[];
 };
 
-export const fetchHousesByIds = async (gameIds: string[]): Promise<Record<string, HouseModel>> => {
+// export const fetchHousesByIds = async (gameIds: string[]): Promise<Record<string, HouseModel>> => {
+//
+//     const results = await Promise.allSettled(gameIds.map(fetchHouse));
+//
+//     return results.reduce((acc, result, index) => {
+//         if (result.status === 'fulfilled' && result.value !== undefined) {
+//             acc[gameIds[index]] = result.value;
+//         }
+//         return acc;
+//     }, {} as Record<string, HouseModel>);
+// }
 
-    const results = await Promise.allSettled(gameIds.map(fetchHouse));
-
-    return results.reduce((acc, result, index) => {
-        if (result.status === 'fulfilled' && result.value !== undefined) {
-            acc[gameIds[index]] = result.value;
+export const fetchHousesByIds = async (houseIds: string[]): Promise<HouseModel[]> => {
+    const client = getSuiClient();
+    const response = await client.multiGetObjects({
+        ids: houseIds,
+        options: {
+            showContent: true
         }
-        return acc;
-    }, {} as Record<string, HouseModel>);
-}
-
-export const fetchTxCapOwner = async (txCapId: string): Promise<string | undefined> => {
-    const graphqlClient = getGraphQLClient();
-    const result = await graphqlClient.query({
-        query: GET_OBJECT_OWNER,
-        variables: {
-            objectId: txCapId,
-        },
     });
-    
-    // Extract the owner data from the query result
-    const ownerData = result?.data?.object?.owner;
 
-    if (!ownerData) {
+    const houses = response.map(x => {
+        if (x.data?.content?.dataType === "moveObject") {
+            // @ts-ignore
+            return x.data.content.fields as HouseModel;
+        }
         return undefined;
-    }
+    })
+        .filter((house): house is HouseModel => house !== undefined);
 
-    // Handle different owner types
-    switch (ownerData.__typename) {
-        case "AddressOwner":
-            return ownerData.owner?.address; // AddressOwner has an `owner` field with `address`
-        case "Parent":
-            return ownerData.parent?.address; // Parent has a `parent` field with `address`
-        default:
-            console.warn(`Unsupported owner type: ${ownerData.__typename}`);
-            return undefined; // Return undefined for unsupported types
-    }
+    console.log(houses);
+    return houses;
 }

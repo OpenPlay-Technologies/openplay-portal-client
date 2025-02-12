@@ -1,6 +1,6 @@
 ﻿"use client"
 import {Ed25519Keypair} from "@mysten/sui/keypairs/ed25519";
-import {createContext, ReactNode, useContext, useEffect, useState} from "react";
+import {createContext, ReactNode, useCallback, useContext, useEffect, useState} from "react";
 import {getOrCreateKeypair} from "@/lib/keypair";
 import {fetchAllPlayCaps} from "@/api/queries/balance-manager";
 import {PlayCapModel} from "@/api/models/openplay-core";
@@ -48,10 +48,13 @@ export const KeypairProvider: React.FC<KeypairProviderProps> = ({ children }) =>
 
     // Check if we can resume the game, or whether we need to mint a new play cap
     useEffect(() => {
-        console.log("currentBalanceManager", currentBalanceManager);
+      // console.log("currentBalanceManager", currentBalanceManager);
         if (account && currentBalanceManager && playCaps.length > 0) {
-            const allowedPlayCap = currentBalanceManager.tx_allow_listed.contents.find((allowedCap) => playCaps.find((ownedCaps) => ownedCaps.id == allowedCap));
-            console.log(allowedPlayCap);
+            const allowedPlayCap = playCaps.find((ownedCap) =>
+                currentBalanceManager?.tx_allow_listed?.fields?.contents?.find((allowedCap) => ownedCap.id.id == allowedCap)
+            );
+
+          // console.log(allowedPlayCap);
             setActivePlayCap(allowedPlayCap ?? null);
         }
         else {
@@ -59,17 +62,17 @@ export const KeypairProvider: React.FC<KeypairProviderProps> = ({ children }) =>
         }
     }, [currentBalanceManager, selectedBalanceManagerId, playCaps, account]);
     
-    const updatePlayCaps = async () => {
+    const updatePlayCaps = useCallback(async () => {
         if (!keypair) return;
         const playCaps = await fetchAllPlayCaps(keypair.toSuiAddress());
         setPlayCaps(playCaps);
-    };
+    }, [keypair]);
 
     useEffect(() => {
         if (keypair){
             updatePlayCaps();
         }
-    }, [account, keypair, currentBalanceManager]);
+    }, [account, keypair, currentBalanceManager, updatePlayCaps]);
 
     return (
         <KeypairContext.Provider value={{ keypair, isLoading, playCaps, updatePlayCaps, activePlayCap }}>

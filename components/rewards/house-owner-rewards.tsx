@@ -3,13 +3,16 @@ import {Button} from "@/components/ui/button";
 import {CardContent} from "@/components/ui/card";
 import {useCallback, useEffect, useState} from "react";
 import {fetchHousesByIds} from "@/api/queries/house";
-import {useCurrentAccount, useSignAndExecuteTransaction, useSuiClient} from "@mysten/dapp-kit";
-import {formatSuiAmount} from "@/lib/utils";
+import {useCurrentAccount, useSignTransaction} from "@mysten/dapp-kit";
+import {formatAddress, formatSuiAmount} from "@/lib/utils";
 import Link from "next/link";
 import {Transaction} from "@mysten/sui/transactions";
 import {useToast} from "@/hooks/use-toast";
 import {useBalance} from "@/components/providers/balance-provider";
 import {HouseAdminCapModel, HouseModel} from "@/api/models/openplay-core";
+import ClientCopyIcon from "@/components/ui/client-copy-icon";
+import {buildClaimHouseRewardsTransaction} from "@/app/rewards/actions";
+import {executeAndWaitForTransactionBlock} from "@/app/actions";
 
 interface GameOwnerRewardsProps {
     houseAdminCapData: HouseAdminCapModel[];
@@ -17,13 +20,12 @@ interface GameOwnerRewardsProps {
 }
 
 export default function HouseOwnerRewards(props: GameOwnerRewardsProps) {
-    const [houseData, setHouseData] = useState<Record<string, HouseModel>>({});
+    const [houseData, setHouseData] = useState<HouseModel[]>([]);
     const account = useCurrentAccount();
-    const packageId = process.env.NEXT_PUBLIC_CORE_PACKAGE_ID;
-    const suiClient = useSuiClient();
     const [loadingClaim, setLoadingClaim] = useState(false);
     const { toast } = useToast();
     const {updateBalance} = useBalance();
+    const {mutate: signTransaction} = useSignTransaction();
 
     // Fetch the game data for the caps
     const updateHouseData = useCallback(async () => {
@@ -32,24 +34,10 @@ export default function HouseOwnerRewards(props: GameOwnerRewardsProps) {
         }
         const houseData = await fetchHousesByIds(props.houseAdminCapData.map(cap => cap.house_id));
         setHouseData(houseData);
-    }, [props.houseAdminCapData]);
+    }, [account?.address, props.houseAdminCapData]);
     useEffect(() => {
         updateHouseData();
     }, [updateHouseData]);
-
-    const {mutate: signAndExecuteTransaction} = useSignAndExecuteTransaction({
-        execute: async ({bytes, signature}) =>
-            await suiClient.executeTransactionBlock({
-                transactionBlock: bytes,
-                signature,
-                options: {
-                    // Raw effects are required so the effects can be reported back to the wallet
-                    showRawEffects: true,
-                    // Select additional data to return
-                    showObjectChanges: true,
-                },
-            }),
-    });
 
     // Claim
     async function handleClaim(cap: HouseAdminCapModel) {
@@ -58,27 +46,17 @@ export default function HouseOwnerRewards(props: GameOwnerRewardsProps) {
             return;
         }
 
-        const tx = new Transaction();
+        const bytes = await buildClaimHouseRewardsTransaction(account.address, cap.house_id, cap.id.id);
+        const tx = Transaction.from(bytes);
 
-        const [coin] = tx.moveCall({
-            target: `${packageId}::game::admin_claim_game_fees`,
-            arguments: [
-                tx.object(cap.house_id),
-                tx.object(cap.id),
-            ],
-        });
-        tx.transferObjects([coin], account.address);
-
-        signAndExecuteTransaction({
+        signTransaction({
                 transaction: tx
             },
             {
                 onSuccess: (result) => {
-                    console.log('Transaction executed', result);
+                  // console.log('Transaction executed', result);
                     setLoadingClaim(true);
-                    suiClient.waitForTransaction({
-                        digest: result.digest
-                    }).then(() => {
+                    executeAndWaitForTransactionBlock(result.bytes, result.signature).then(() => {
                         toast({
                             title: 'Claimed',
                             description: 'Your claim has been processed successfully',
@@ -116,21 +94,24 @@ export default function HouseOwnerRewards(props: GameOwnerRewardsProps) {
                 </TableHeader>
                 <TableBody>
                     {props.houseAdminCapData.map((cap) => {
-                            const house = houseData[cap.house_id];
+                            const house = houseData.find(house => house.id.id === cap.house_id);
                             if (!house) {
                                 return null;
                             }
                             return (
-                                <TableRow key={house.id}>
+                                <TableRow key={house.id.id}>
                                     <TableCell>
-                                        {house.id}
+                                        <div className={"inline-flex items-center gap-2"}>
+                                            {formatAddress(house.id.id)}
+                                            <ClientCopyIcon value={house.id.id} className={"w-4 h-4"}/>
+                                        </div>
                                     </TableCell>
                                     <TableCell>
                                         <div className={"inline-flex gap-2 items-center"}>
                                             <span
-                                                className={house.vault.collected_house_fees.value > 0 ? "text-green-600" : ""}
-                                            >{formatSuiAmount(house.vault.collected_house_fees.value)}</span>
-                                            {house.vault.collected_house_fees.value > 0 &&
+                                                className={house.vault.fields.collected_house_fees > 0 ? "text-green-600" : ""}
+                                            >{formatSuiAmount(house.vault.fields.collected_house_fees)}</span>
+                                            {house.vault.fields.collected_house_fees > 0 &&
                                                 <Button disabled={loadingClaim} variant={"outline"} onClick={() => {
                                                     handleClaim(cap)
                                                 }}>
@@ -140,7 +121,7 @@ export default function HouseOwnerRewards(props: GameOwnerRewardsProps) {
                                         </div>
                                     </TableCell>
                                     <TableCell>
-                                        <Link href={`/house/${house.id}`}>
+                                        <Link href={`/house/${house.id.id}`}>
                                             <span className="underline font-semibold">See more</span>
                                         </Link>
                                     </TableCell>

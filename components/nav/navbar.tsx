@@ -7,16 +7,15 @@ import Link from "next/link";
 import Wallet from "@/components/sui/wallet";
 import NavButton from "@/components/nav/nav-button";
 import {useTheme} from "next-themes";
-import {ModeToggle} from "@/components/nav/mode-toggle";
 
 interface NavbarProps {
     transparent?: boolean;
 }
 
 const navigationLinks = [
-    {name: "Home", href: "/"},
-    {name: "Gas Station", href: "/gas-station"},
-    {name: "Create", href: "/create/house"},
+    {name: "Games", href: "/"},
+    {name: "Houses", href: "/houses"},
+    {name: "Rewards", href: "/rewards"},
 ]
 
 export default function Navbar(props: NavbarProps) {
@@ -28,7 +27,7 @@ export default function Navbar(props: NavbarProps) {
     }, []);
 
     return (
-        <div className="px-4 flex flex-row justify-between items-center">
+        <div className="px-4 flex flex-row justify-between items-center h-[72px]">
             {/*Logo*/}
             {
                 loading ?
@@ -64,7 +63,7 @@ export default function Navbar(props: NavbarProps) {
 
             {/*Extra links*/}
             <div className={"flex flex-row gap-2 p-4"}>
-                <ModeToggle/>
+                {/*<ModeToggle/>*/}
                 <a href={process.env.NEXT_PUBLIC_GITBOOK_URL ?? ""} target={"_blank"} >
                 <NavButton
                     tabIndex={0}

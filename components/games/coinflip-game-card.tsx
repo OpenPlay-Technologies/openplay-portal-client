@@ -1,4 +1,5 @@
-﻿import {Card, CardContent, CardHeader} from "@/components/ui/card"
+﻿/* eslint-disable @next/next/no-img-element */
+import {Card, CardContent, CardHeader} from "@/components/ui/card"
 import {formatBps} from "@/lib/utils";
 import Link from "next/link";
 

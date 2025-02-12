@@ -1,10 +1,7 @@
 ﻿"use client"
-import FileUploadBox from "@/components/ui/file-upload-box";
 import {Input} from "@/components/ui/input";
 import {Button} from "@/components/ui/button";
-import {ArrowLeftIcon} from "@heroicons/react/24/outline";
 import React from "react";
-import Link from "next/link";
 import {Card} from "@/components/ui/card";
 import {z} from "zod";
 import {useForm} from "react-hook-form";
@@ -17,15 +14,16 @@ import {
     FormLabel,
     FormMessage
 } from "@/components/ui/form";
-import {useCurrentAccount, useSignAndExecuteTransaction, useSuiClient} from "@mysten/dapp-kit";
+import {useCurrentAccount, useSignTransaction} from "@mysten/dapp-kit";
 import {Transaction} from '@mysten/sui/transactions';
-import {fetchRegistry} from "@/api/queries/registry";
 import {useToast} from "@/hooks/use-toast";
 import {useBalance} from "@/components/providers/balance-provider";
 import { Switch } from "@/components/ui/switch";
-import {formatSuiAmount} from "@/lib/utils";
 import {ToastAction} from "@/components/ui/toast";
 import {useRouter} from "next/navigation";
+import {HOUSE_TYPE} from "@/api/core-constants";
+import {BuildCreateHouseTransaction} from "@/app/create/house/actions";
+import {executeAndWaitForTransactionBlock} from "@/app/actions";
 
 
 const createHouseSchema = z.object({
@@ -49,24 +47,11 @@ const createHouseSchema = z.object({
 
 export default function CreateHouse() {
     const router = useRouter();
-    const suiClient = useSuiClient();
     const account = useCurrentAccount();
     const {toast} = useToast();
     const {updateBalance} = useBalance();
+    const {mutate: signTransaction} = useSignTransaction();
     
-    const {mutate: signAndExecuteTransaction} = useSignAndExecuteTransaction({
-        execute: async ({bytes, signature}) =>
-            await suiClient.executeTransactionBlock({
-                transactionBlock: bytes,
-                signature,
-                options: {
-                    // Raw effects are required so the effects can be reported back to the wallet
-                    showRawEffects: true,
-                    // Select additional data to return
-                    showObjectChanges: true,
-                },
-            }),
-    });
 
     // Initialize the form
     const form = useForm<z.infer<typeof createHouseSchema>>({
@@ -75,8 +60,7 @@ export default function CreateHouse() {
 
     // Handle successful form submission
     async function onSubmit(values: z.infer<typeof createHouseSchema>) {
-        console.log(values);
-        
+
         if (!account) {
             toast({
                 variant:"destructive",
@@ -86,58 +70,24 @@ export default function CreateHouse() {
             return;
         }
 
-        const packageId = process.env.NEXT_PUBLIC_CORE_PACKAGE_ID;
-        const registry = await fetchRegistry();
-        
-        if (!registry) {
-            toast({
-                variant:"destructive",
-                title: 'Registry not found',
-                description: 'Please try again later',
-            })
-            return;
-        }
-        
-        console.log(values);
-
-        const tx = new Transaction();
-        const [house, houseCap] = tx.moveCall({
-            target: `${packageId}::house::new`,
-            arguments: [
-                tx.pure.bool(values.private),
-                tx.pure.u64(values.target_balance),
-                tx.pure.u64(values.house_fee_bps),
-                tx.pure.u64(values.referral_fee_bps),
-            ],
-        });
-        tx.moveCall({
-            target: `${packageId}::house::share`,
-            arguments: [
-                tx.object(registry.id),
-                tx.object(house),
-            ],
-        });
-        tx.transferObjects([houseCap], account.address);
-        
-
-        signAndExecuteTransaction({
+        const bytes = await BuildCreateHouseTransaction(account.address, values.private, values.target_balance, values.house_fee_bps, values.referral_fee_bps);
+        const tx = Transaction.from(bytes);
+        signTransaction({
                 transaction: tx
             },
             {
                 onSuccess: (result) => {
-                    console.log('Transaction executed', result);
-                    suiClient.waitForTransaction({
-                        digest: result.digest
-                    }).then(() => {
-                        const createdHouse = result.objectChanges?.find(
+                    // console.log('Transaction executed', result);
+                    executeAndWaitForTransactionBlock(result.bytes, result.signature).then(resp => {
+                        const createdHouse = resp.objectChanges?.find(
                             (change) =>
                                 change.type == "created" &&
-                                change.objectType == packageId + "::house::House" &&
+                                change.objectType == HOUSE_TYPE &&
                                 change.objectId
                         );
                         if (createdHouse) {
                             if (createdHouse.type == "created") {
-                                let houseId = createdHouse.objectId;
+                                const houseId = createdHouse.objectId;
                                 toast({
                                     title: "Transaction successful",
                                     description: 'The house has been created successfully',
@@ -177,7 +127,7 @@ export default function CreateHouse() {
 
 
     return (
-        <Card className={"flex flex-col p-6 max-h-[90%]"}>
+        <Card className={"flex flex-col p-6 max-h-[90%] min-h-fit"}>
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)}>
                     {/*<Link href={"/create"} className={"w-fit"}>*/}

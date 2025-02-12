@@ -1,5 +1,5 @@
 ﻿import {Card, CardContent, CardHeader} from "@/components/ui/card";
-import {ActivityIcon, CheckIcon, CoinsIcon, LandmarkIcon, XIcon} from "lucide-react";
+import {ActivityIcon, CheckIcon, CoinsIcon, GaugeIcon, LandmarkIcon, XIcon} from "lucide-react";
 import {ListBulletIcon} from "@heroicons/react/24/outline";
 import {formatBps, formatSuiAmount} from "@/lib/utils";
 import React from "react";
@@ -7,7 +7,6 @@ import {fetchHouse} from "@/api/queries/house";
 import {notFound} from 'next/navigation';
 import ClientCopyIcon from "@/components/ui/client-copy-icon";
 import ManageTxCaps from "@/components/house/manage-tx-caps";
-import ManageReferral from "@/components/house/manage-referral";
 import ManagePosition from "@/components/house/manage-position";
 
 export default async function GameDetails({params}: { params: { houseId: string } }) {
@@ -31,32 +30,32 @@ export default async function GameDetails({params}: { params: { houseId: string 
                             </div>
                         </CardHeader>
                         <CardContent className={"p-6"}>
-                            <div className={"flex flex-col gap-2"}>
-
+                            <div className={"grid grid-cols-2 gap-2"}>
                                 <div>
                                     <p className={"text-muted-foreground text-sm"}>
                                         ID
                                     </p>
-                                    <div className={"inline-flex align-center gap-2 mb-4"}>
+                                    <div className={"inline-flex align-center gap-2"}>
                                         <p className={""}>
-                                            {house.id.slice(0, 5) + "..." + house.id.slice(-5)}
+                                            {house.id.id.slice(0, 5) + "..." + house.id.id.slice(-5)}
                                         </p>
                                         <div className={"flex items-center"}>
-                                            <ClientCopyIcon className={"w-4 h-4"} value={house.id}/>
+                                            <ClientCopyIcon className={"w-4 h-4"} value={house.id.id}/>
                                         </div>
                                     </div>
                                 </div>
-                                {/*<div>*/}
-                                {/*    <p className={"text-muted-foreground text-sm"}>*/}
-                                {/*        Owner*/}
-                                {/*    </p>*/}
-                                {/*    <div className={"inline-flex align-center gap-2 mb-4"}>*/}
-                                
-                                {/*    </div>*/}
-                                {/*</div>*/}
-                            </div>
-
-                            <div className={"grid grid-cols-2 gap-2"}>
+                                <div>
+                                    <p className={"text-muted-foreground text-sm"}>
+                                        Active
+                                    </p>
+                                    <p className={" "}>
+                                        {house.state.fields.is_active ?
+                                            <CheckIcon className={"w-6 h-6 text-green-600"} strokeWidth={2}/>
+                                            :
+                                            <XIcon className={"w-6 h-6 text-red-600"} strokeWidth={2}/>
+                                        }
+                                    </p>
+                                </div>
                                 <div>
                                     <p className={"text-muted-foreground text-sm"}>
                                         Private/Public
@@ -97,15 +96,13 @@ export default async function GameDetails({params}: { params: { houseId: string 
                         </CardContent>
                     </Card>
                 </div>
-                <ManageReferral house={house}/>
-                <ManageTxCaps house={house} />
-                {/*Vault status*/}
+                {/*Current Cycle Card*/}
                 <div className="w-full pb-4">
                     <Card>
                         <CardHeader className={"border-b"}>
                             <div className={"font-semibold inline-flex items-center"}>
-                                <LandmarkIcon className={"w-6 h-6 mr-2"} strokeWidth={2}/>
-                                Vault Status
+                                <GaugeIcon className={"w-6 h-6 mr-2"} strokeWidth={2}/>
+                                State
                             </div>
                         </CardHeader>
                         <CardContent className={"p-6"}>
@@ -115,7 +112,7 @@ export default async function GameDetails({params}: { params: { houseId: string 
                                         Active
                                     </p>
                                     <p className={" "}>
-                                        {house.vault.active ?
+                                        {house.state.fields.is_active ?
                                             <CheckIcon className={"w-6 h-6 text-green-600"} strokeWidth={2}/>
                                             :
                                             <XIcon className={"w-6 h-6 text-red-600"} strokeWidth={2}/>
@@ -124,10 +121,59 @@ export default async function GameDetails({params}: { params: { houseId: string 
                                 </div>
                                 <div>
                                     <p className={"text-muted-foreground text-sm"}>
+                                        Epoch
+                                    </p>
+                                    <p className={" "}>
+                                        {house.state.fields.epoch}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className={"text-muted-foreground text-sm"}>
+                                        Active stake
+                                    </p>
+                                    <p className={" "}>
+                                        {formatSuiAmount(Number(house.state.fields.active_stake))}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className={"text-muted-foreground text-sm"}>
+                                        Inactive stake
+                                    </p>
+                                    <p className={" "}>
+                                        {formatSuiAmount(Number(house.state.fields.inactive_stake))}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className={"text-muted-foreground text-sm"}>
+                                        Pending unstake
+                                    </p>
+                                    <p className={" "}>
+                                        {formatSuiAmount(Number(house.state.fields.pending_unstake))}
+                                    </p>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+                <ManageTxCaps house={house}/>
+                {/*<ManageReferral house={house}/>*/}
+                {/*Vault status*/}
+                <div className="w-full pb-4">
+                    <Card>
+                        <CardHeader className={"border-b"}>
+                            <div className={"font-semibold inline-flex items-center"}>
+                            <LandmarkIcon className={"w-6 h-6 mr-2"} strokeWidth={2}/>
+                                Vault Status
+                            </div>
+                        </CardHeader>
+                        <CardContent className={"p-6"}>
+                        <div className={"grid grid-cols-2 gap-2"}>
+                                <div>
+                                    <p className={"text-muted-foreground text-sm"}>
                                         Last updated epoch
                                     </p>
                                     <p className={" "}>
-                                        {house.vault.epoch}
+                                        {house.vault.fields.epoch}
                                     </p>
                                 </div>
                                 <div>
@@ -135,7 +181,7 @@ export default async function GameDetails({params}: { params: { houseId: string 
                                         Reserve
                                     </p>
                                     <p className={" "}>
-                                        {formatSuiAmount(house.vault.reserve_balance.value)}
+                                        {formatSuiAmount(house.vault.fields.reserve_balance)}
                                     </p>
                                 </div>
                                 <div>
@@ -143,7 +189,7 @@ export default async function GameDetails({params}: { params: { houseId: string 
                                         Play balance
                                     </p>
                                     <p className={" "}>
-                                        {formatSuiAmount(house.vault.play_balance.value)}
+                                        {formatSuiAmount(house.vault.fields.play_balance)}
                                     </p>
                                 </div>
 
@@ -168,7 +214,7 @@ export default async function GameDetails({params}: { params: { houseId: string 
                                         House fee
                                     </p>
                                     <p className={" "}>
-                                        {formatSuiAmount(house.vault.collected_house_fees.value || 0)}
+                                        {formatSuiAmount(house.vault.fields.collected_house_fees || 0)}
                                     </p>
                                 </div>
                                 {/*Protocol fees*/}
@@ -193,7 +239,7 @@ export default async function GameDetails({params}: { params: { houseId: string 
                 {/*        /!*<h1 className="text-3xl font-semibold">{house.name}</h1>*!/*/}
                 {/*        <div className={"inline-flex gap-2"}>*/}
                 {/*            <TagIcon className={"size-6"}/>*/}
-                {/*            <span>{house.id}</span>*/}
+                {/*            <span>{house.id.id}</span>*/}
                 {/*        </div>*/}
                 {/*    </div>*/}
                 
@@ -226,7 +272,7 @@ export default async function GameDetails({params}: { params: { houseId: string 
                                         Bet amount
                                     </p>
                                     <p className={" "}>
-                                        {formatSuiAmount(Number(house.state.history.all_time_bet_amount) || 0)}
+                                        {formatSuiAmount(Number(house.state.fields.all_time_bet_amount) || 0)}
                                     </p>
                                 </div>
                                 {/*Total win amount*/}
@@ -235,7 +281,7 @@ export default async function GameDetails({params}: { params: { houseId: string 
                                         Win amount
                                     </p>
                                     <p className={" "}>
-                                        {formatSuiAmount(Number(house.state.history.all_time_win_amount) || 0)}
+                                        {formatSuiAmount(Number(house.state.fields.all_time_win_amount) || 0)}
                                     </p>
                                 </div>
                                 {/*Estimated RTP*/}
@@ -244,9 +290,9 @@ export default async function GameDetails({params}: { params: { houseId: string 
                                         Historical RTP
                                     </p>
                                     <p className={" "}>
-                                        {house.state.history.all_time_win_amount > 0 && house.state.history.all_time_bet_amount > 0
+                                        {house.state.fields.all_time_win_amount > 0 && house.state.fields.all_time_bet_amount > 0
                                             ?
-                                            (Number(house.state.history.all_time_win_amount / house.state.history.all_time_bet_amount) * 100).toFixed(2) + " %"
+                                            (Number(house.state.fields.all_time_win_amount / house.state.fields.all_time_bet_amount) * 100).toFixed(2) + " %"
                                             :
                                             "N/A"}
                                     </p>
@@ -257,10 +303,10 @@ export default async function GameDetails({params}: { params: { houseId: string 
                                         Distributed profits / losses
                                     </p>
                                     <p className={
-                                            (house.state.history.all_time_profits > house.state.history.all_time_losses) 
+                                        (Number(house.state.fields.all_time_profits) >= Number(house.state.fields.all_time_losses))
                                                 ? "text-green-600" :
                                             "text-red-600"}>
-                                        {formatSuiAmount(Number(house.state.history.all_time_profits - house.state.history.all_time_losses))}
+                                        {formatSuiAmount(Number(house.state.fields.all_time_profits - house.state.fields.all_time_losses))}
                                     </p>
                                 </div>
                             </div>

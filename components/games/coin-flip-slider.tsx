@@ -1,22 +1,11 @@
 ﻿import {Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious} from "@/components/ui/carousel";
 import CoinFlipGameCard from "@/components/games/coinflip-game-card";
-import {fetchAllCoinFlipGames} from "@/api/queries/games";
+import {fetchGame} from "@/api/queries/games";
+import {gameMetaData} from "@/lib/game-metadata";
 
-const gameData = [
-    {
-        id: "0x3f88bb4fe1ecd4d5a1ea7a80c79359a9c00ebfceb8cffc9a57168b8f3dd19d4f",
-        title: "Sui vs Sol",
-        image: "/sui-vs-sol-thumbnail.png",
-        url: "/coin-flip/sui-vs-sol",
-    }
-]
-
-interface GameSliderProps {
-    title: string;
-}
-
-export default async function CoinFlipSlider(props: GameSliderProps) {
-    const coinFlipGames = await fetchAllCoinFlipGames();
+export default async function CoinFlipSlider() {
+    const gameId = gameMetaData.id;
+    const gameData = await fetchGame(gameId);
     
     return (
         <div className={"p-8 mx-8"}>
@@ -28,21 +17,19 @@ export default async function CoinFlipSlider(props: GameSliderProps) {
                 slidesToScroll: "auto"
             }}>
                 <CarouselContent className="-ml-1">
-                    {gameData.map((data) => {
-                        const game = coinFlipGames.find((game) => game.id === data.id);
-                        if (!game) return null;
-
+                    {[gameMetaData].map((data) => {
+                        if (!gameData) return null;
                         return (
-                            <CarouselItem key={game.id} className="pl-1 basis-1/8">
+                            <CarouselItem key={data.id} className="pl-1 basis-1/8">
                                 <div className="p-1">
                                     <CoinFlipGameCard
-                                        url={data.url + "?gameId=" + game.id}
+                                        url={data.url}
                                         title={data.title}
                                         image={data.image}
-                                        houseEdgeBps={Number(game.house_edge_bps)}
-                                        payoutFactorBps={Number(game.payout_factor_bps)}
-                                        id={game.id}
-                                        maxStake={Number(game.max_stake)}
+                                        houseEdgeBps={Number(gameData.house_edge_bps)}
+                                        payoutFactorBps={Number(gameData.payout_factor_bps)}
+                                        id={data.id}
+                                        maxStake={Number(gameData.max_stake)}
                                     />
                                 </div>
                             </CarouselItem>

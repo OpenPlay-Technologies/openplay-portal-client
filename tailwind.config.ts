@@ -16,6 +16,16 @@ export default {
                 glow: '0 0 10px 5px rgba(255, 255, 255, 0.3)',
             },
             keyframes: {
+                slideDown: {
+                    "0%": {
+                        transform: 'translateY(-20px)',
+                        opacity: '0'
+                    },
+                    "100%": {
+                        transform: 'translateY(0)',
+                        opacity: '1'
+                    },
+                },
                 progress: {
                     "0%": {
                         transform: "translateX(0) scaleX(0)",
@@ -34,9 +44,42 @@ export default {
                         transform: "translateX(100%) scaleX(1)"
                     }
                 },
+                'slide-from-top': {
+                    '0%': {
+                        transform: 'translateY(-100%)',
+                        opacity: '0'
+                    },
+                    '100%': {
+                        transform: 'translateY(0)',
+                        opacity: '1'
+                    },
+                },
+                'shift-down': {
+                    '0%': {
+                        transform: 'translateY(0)'
+                    },
+                    '50%': {
+                        transform: 'translateY(var(--item-height, 20px))'
+                    },
+                    '100%': {
+                        transform: 'translateY(0)'
+                    }
+                },
+                highlight: {
+                    "0%": {
+                        opacity: '0'
+                    },
+                    "100%": {
+                        opacity: '1'
+                    },
+                }
             },
             animation: {
                 progress: "progress 1s infinite linear",
+                slideDown: "slideDown 0.3s ease-out forwards",
+                'slide-from-top': 'slide-from-top 0.3s ease-out forwards',
+                'shift-down': 'shift-down 0.3s ease-out forwards',
+                highlight: 'highlight 2s ease-in-out',
             },
             colors: {
                 background: 'hsl(var(--background))',

@@ -1,4 +1,4 @@
-﻿import {Balance, Table, VecMap, VecSet} from "@/api/models/shared-models";
+﻿import {Balance, MoveObject, Table, Uid, VecMap, VecSet} from "@/api/models/shared-models";
 
 export const errorMessages: Record<string, Record<number, string>> = {
     balance_manager: {
@@ -13,13 +13,15 @@ export const errorMessages: Record<string, Record<number, string>> = {
         1: "The house does not have sufficient funds to complete the requested action.",
         2: "The provided transaction cap is invalid. You are not authorized to execute these transactions",
         3: "The provided participation is invalid. Please verify that it is linked to the provided house.",
-        4: "The vault is currently not active. Please try again later.",
+        4: "The house is currently not active. Please try again later.",
         5: "The referral program is not enabled for this house.",
         6: "This house is private. Only the administrator can fund it.",
         7: "The maximum number of transaction caps has been reached.",
-        8: "The provided transaction cap is not in the allowed list.",
+        // 8: "The provided transaction cap is not in the allowed list.",
         9: "The provided house admin cap is invalid.",
         10: "The provided fee configuration is invalid.",
+        11: "The provided game is not authorized to transact with this house.",
+        12: "The provided transaction cap is not in the allowed list.",
     },
     participation: {
         1: "The provided GGR share is invalid.",
@@ -32,38 +34,51 @@ export const errorMessages: Record<string, Record<number, string>> = {
     transaction: {
         1: "The provided transaction type is not supported.",
     },
+    registry: {
+        1: "This package version is disabled. Try using a different version.",
+        2: "The provided version is already allowed.",
+        3: "The provided version is already disabled.",
+    },
     vault: {
         1: "The vault does not have sufficient funds to complete the requested action.",
-        2: "The vault is currently inactive.",
+        // 2: "The vault is currently inactive.",
         3: "The provided referral does not exist.",
-    },
-    history: {
-        1: "The provided epoch does not match the current epoch.",
-        2: "You are trying to unstake more than you have staked.",
-        3: "The end of day data is not available.",
-        4: "The epoch has not finished yet.",
-        5: "The volume data is not available.",
-        6: "The profits or losses are invalid.",
     },
     state: {
         1: "The provided transaction is not supported.",
+        2: "The provided epoch does not match the current epoch.",
+        3: "You are trying to unstake more than you have staked.",
+        4: "The end of day data is not available.",
+        5: "The epoch has not finished yet.",
+        6: "The volume data is not available.",
+        7: "The profits or losses are invalid.",
+        8: "The house is not active.",
+        9: "The house is already active."
     },
 };
 
 export interface RegistryModel {
-    id: string;
+    id: Uid;
     houses: string[];
     protocol_fee_bps: bigint;
 }
 
+// export interface VaultModel {
+//     epoch: number;
+//     collected_house_fees: Balance;
+//     collected_protocol_fees: Balance
+//     collected_referral_fees: VecMap<string, Balance>, // TODO: verify this mapping is ok
+//     play_balance: Balance;
+//     reserve_balance: Balance;
+// }
+
 export interface VaultModel {
     epoch: number;
-    collected_house_fees: Balance;
-    collected_protocol_fees: Balance
-    collected_referral_fees: VecMap<string, Balance>, // TODO: verify this mapping is ok
-    play_balance: Balance;
-    reserve_balance: Balance;
-    active: boolean
+    collected_house_fees: number;
+    collected_protocol_fees: number;
+    collected_referral_fees: MoveObject<VecMap<string, number>>, // TODO: verify this mapping is ok
+    play_balance: number;
+    reserve_balance: number;
 }
 
 export interface VolumesModel {
@@ -77,46 +92,59 @@ export interface EndOfDayModel {
     day_losses: bigint
 }
 
-export interface HistoryModel {
+export interface StateModel {
+    accounts: MoveObject<Table>
     epoch: bigint,
-    pending_stake: bigint,
+    is_active: boolean;
+    inactive_stake: bigint;
+    active_stake: bigint
     pending_unstake: bigint,
     current_volumes: VolumesModel,
-    previous_end_of_day: EndOfDayModel,
-    historic_volumes: Table,
-    end_of_day_balances: Table,
+
     all_time_bet_amount: bigint,
     all_time_win_amount: bigint,
     all_time_profits: bigint,
     all_time_losses: bigint
+
+    active_history: MoveObject<Table>,
+    historic_volumes: MoveObject<Table>,
+    eod_history: MoveObject<Table>,
 }
 
-export interface StateModel {
-    accounts: Table
-    history: HistoryModel,
-}
+// export interface HouseModel {
+//     id: string;
+//     admin_cap_id: string;
+//     private: boolean;
+//     target_balance: bigint;
+//     house_fee_bps: bigint;
+//     referral_fee_bps: bigint;
+//     tx_allow_listed: VecSet<string>;
+//     vault: VaultModel;
+//     state: StateModel;
+// }
 
 export interface HouseModel {
-    id: string;
+    id: Uid;
     admin_cap_id: string;
     private: boolean;
     target_balance: bigint;
     house_fee_bps: bigint;
     referral_fee_bps: bigint;
-    tx_allow_listed: VecSet<string>;
-    vault: VaultModel;
-    state: StateModel;
+    tx_allow_listed: MoveObject<VecSet<string>>;
+    vault: MoveObject<VaultModel>;
+    state: MoveObject<StateModel>;
 }
 
 export interface HouseAdminCapModel {
-    id: string;
+    id: Uid;
     house_id: string;
 }
 
-export interface HouseTransactionCapModel {
-    id: string;
-    house_id: string;
-}
+// export interface HouseTransactionCapModel {
+//     id: string;
+//     house_id: string;
+//     game_id: string;
+// }
 
 export interface AccountModel {
     lifetime_total_bets: bigint;
@@ -125,40 +153,48 @@ export interface AccountModel {
     credit_balance: bigint;
 }
 
+// export interface BalanceManagerModel {
+//     id: string;
+//     balance: Balance;
+//     tx_allow_listed: VecSet<string>;
+//     cap_id: string;
+// }
+
 export interface BalanceManagerModel {
-    id: string,
-    balance: Balance,
-    tx_allow_listed: VecSet<string>
+    id: Uid;
+    balance: number;
+    tx_allow_listed: MoveObject<VecSet<string>>;
+    cap_id: string;
 }
 
 export interface BalanceManagerCapModel {
-    id: string;
+    id: Uid;
     balance_manager_id: string;
 }
 
 export interface PlayCapModel {
-    id: string;
+    id: Uid;
     balance_manager_id: string;
 }
 
 export interface ParticipationModel {
-    id: string;
+    id: Uid;
     house_id: string;
     last_updated_epoch: bigint;
-    active_stake: bigint;
-    inactive_stake: bigint;
+    stake: bigint;
+    pending_stake: bigint;
     claimable_balance: bigint;
     unstake_requested: boolean;
 }
 
 export interface ReferralModel {
-    id: string;
+    id: Uid;
     house_id: string;
     cap_id: string;
 }
 
 export interface ReferralCapModel {
-    id: string;
+    id: Uid;
     referral_id: string;
 }
 

@@ -5,16 +5,24 @@ import {ArrowDownCircle, ArrowUpCircle, Plus} from 'lucide-react'
 import {Button} from "@/components/ui/button"
 import {Input} from "@/components/ui/input"
 import {ScrollArea} from "@/components/ui/scroll-area"
-import {useCurrentAccount, useDisconnectWallet, useSignAndExecuteTransaction, useSuiClient} from "@mysten/dapp-kit";
+import {useCurrentAccount, useDisconnectWallet, useSignTransaction} from "@mysten/dapp-kit";
 import {useBalanceManager} from "@/components/providers/balance-manager-provider";
 import {z} from "zod";
 import {zodResolver} from "@hookform/resolvers/zod";
 import {useForm} from "react-hook-form";
-import {Transaction} from '@mysten/sui/transactions';
 import {Form, FormControl, FormField, FormItem, FormMessage} from "@/components/ui/form";
 import {cn, formatSuiAmount} from "@/lib/utils";
 import {useKeypair} from "@/components/providers/keypair-provider";
 import {Card} from "@/components/ui/card";
+import ClientCopyIcon from "@/components/ui/client-copy-icon";
+import {
+    buildDepositToExistingBalanceManagerTransaction,
+    buildDepositToNewBalanceManagerTransaction,
+    buildWithdrawFromBalanceManagerTransaction,
+    executeAndWaitForTransactionBlock
+} from "@/app/actions";
+import {Transaction} from "@mysten/sui/transactions";
+import {BALANCE_MANAGER_TYPE} from "@/api/core-constants";
 
 const transactSchema = z.object({
     amount: z
@@ -39,27 +47,12 @@ export default function BalanceManagerCard() {
     } = useBalanceManager();
     const {
         updatePlayCaps: updateKpPlayCaps,
-        activePlayCap: kpActivePlayCap,
         keypair
     } = useKeypair();
-    const corePackageId = process.env.NEXT_PUBLIC_CORE_PACKAGE_ID;
     const {mutate: disconnect} = useDisconnectWallet();
+    
+    const {mutate: signTransaction} = useSignTransaction();
 
-
-    const suiClient = useSuiClient();
-    const {mutate: signAndExecuteTransaction} = useSignAndExecuteTransaction({
-        execute: async ({bytes, signature}) =>
-            await suiClient.executeTransactionBlock({
-                transactionBlock: bytes,
-                signature,
-                options: {
-                    // Raw effects are required so the effects can be reported back to the wallet
-                    showRawEffects: true,
-                    // Select additional data to return
-                    showObjectChanges: true,
-                },
-            }),
-    });
 
     useEffect(() => {
         if (Object.entries(balanceManagerData).length == 0) {
@@ -85,107 +78,55 @@ export default function BalanceManagerCard() {
             return;
         }
 
-        const tx = new Transaction();
-        const amountInMist = values.amount * 1e9;
+        let bytes;
 
         if (action == "Deposit") {
             if (!newState && currentBalanceManager && currentBalanceManagerCap) {
-                console.log("deposit on existing bm");
-                const [coin] = tx.splitCoins(tx.gas, [amountInMist]);
-                tx.moveCall({
-                    target: `${corePackageId}::balance_manager::deposit`,
-                    arguments: [
-                        tx.object(currentBalanceManager.id),
-                        tx.object(currentBalanceManagerCap.id),
-                        tx.object(coin)
-                    ],
-                });
-                // We also add a play_cap during a deposit to avoid double tx costs
-                const [play_cap] = tx.moveCall({
-                    target: `${corePackageId}::balance_manager::mint_play_cap`,
-                    arguments: [
-                        tx.object(currentBalanceManager.id),
-                        tx.object(currentBalanceManagerCap.id),
-                    ],
-                });
-                tx.transferObjects([play_cap], keypair.toSuiAddress());
+                bytes = await buildDepositToExistingBalanceManagerTransaction(account.address, currentBalanceManager.id.id, currentBalanceManagerCap.id.id, values.amount, keypair.toSuiAddress());
             } else {
-                console.log("deposit on new bm");
-
-                const [balance_manager, balance_manager_cap] = tx.moveCall({
-                    target: `${corePackageId}::balance_manager::new`,
-                    arguments: [],
-                });
-                const [coin] = tx.splitCoins(tx.gas, [amountInMist]);
-                tx.moveCall({
-                    target: `${corePackageId}::balance_manager::deposit`,
-                    arguments: [
-                        tx.object(balance_manager),
-                        tx.object(balance_manager_cap),
-                        tx.object(coin)
-                    ],
-                });
-                // We also add a play_cap during a deposit to avoid double tx costs
-                const [play_cap] = tx.moveCall({
-                    target: `${corePackageId}::balance_manager::mint_play_cap`,
-                    arguments: [
-                        tx.object(balance_manager),
-                        tx.object(balance_manager_cap),
-                    ],
-                });
-                tx.transferObjects([play_cap], keypair.toSuiAddress());
-
-                tx.moveCall({
-                    target: `${corePackageId}::balance_manager::share`,
-                    arguments: [
-                        tx.object(balance_manager)
-                    ],
-                });
-                tx.transferObjects([balance_manager_cap], account.address);
+                bytes = await buildDepositToNewBalanceManagerTransaction(account.address, values.amount, keypair.toSuiAddress());
             }
-
         }
         if (action == "Withdraw") {
             if (!currentBalanceManager || !currentBalanceManagerCap) {
                 console.error('Balance manager not found');
                 return;
             }
-            const [coin] = tx.moveCall({
-                target: `${corePackageId}::balance_manager::withdraw`,
-                arguments: [
-                    tx.object(currentBalanceManager.id),
-                    tx.object(currentBalanceManagerCap.id),
-                    tx.pure.u64(amountInMist)
-                ],
-            });
-            tx.transferObjects([coin], account.address);
+            bytes = await buildWithdrawFromBalanceManagerTransaction(account.address, currentBalanceManager.id.id, currentBalanceManagerCap.id.id, values.amount);
         }
-
-        signAndExecuteTransaction({
+        
+        if (!bytes) {
+            console.error('Transaction bytes not found');
+            return;
+        }
+        
+        const tx = Transaction.from(bytes);
+        signTransaction({
                 transaction: tx
             },
             {
                 onSuccess: (result) => {
-                    console.log('Transaction executed', result);
+                    // console.log('Transaction executed', result);
                     setLoading(true);
-                    suiClient.waitForTransaction({
-                        digest: result.digest
-                    }).then(() => {
-                        console.log('Transaction finished');
+                    executeAndWaitForTransactionBlock(result.bytes, result.signature).then(resp => {
+                        // console.log('Transaction finished');
                         refreshBalanceManagers();
                         refreshBalanceManagerCaps();
                         refreshPlayCaps();
                         updateKpPlayCaps();
                         setLoading(false);
-                        const createdBm = result.objectChanges?.find(
+                        console.log(resp.objectChanges);
+                        const createdBm = resp.objectChanges?.find(
                             (change) =>
                                 change.type == "created" &&
-                                change.objectType == corePackageId + "::balance_manager::BalanceManager" &&
+                                change.objectType == BALANCE_MANAGER_TYPE &&
                                 change.objectId
                         );
+                        console.log(createdBm);
                         if (createdBm) {
                             if (createdBm.type == "created") {
                                 setNewState(false);
+                                console.log(createdBm.objectId);
                                 setSelectedBalanceManagerId(createdBm.objectId);
                             }
                         }
@@ -202,59 +143,63 @@ export default function BalanceManagerCard() {
     }
 
 
-
     return (
         <Card className={"p-6 flex flex-col gap-4"}>
             <h2 className={"font-semibold"}>{Object.entries(balanceManagerData).length > 0 ? "Select your balance manager" : "Create a balance manager"}</h2>
-            <div className={cn("flex flex-row justify-between h-[200px] my-4", Object.entries(balanceManagerData).length > 0 ? "w-[600px]" : "w-[300px]")}>
-                {Object.entries(balanceManagerData).length > 0 && 
-                <div className="w-1/3 flex flex-col border-r pr-4 h-full">
-                    <div className="flex flex-col justify-between h-full">
-                        <ScrollArea className="flex flex-col">
-                            {Object.entries(balanceManagerData).map(([id, manager]) => (
-                                <Button
-                                    key={id}
-                                    variant={id === selectedBalanceManagerId && !newState ? "secondary" : "ghost"}
-                                    className="w-full mb-2"
-                                    onClick={() => {
-                                        setSelectedBalanceManagerId(id); 
-                                        setNewState(false);
-                                    }}
-                                >
-                                    <div className="flex flex-col items-start w-full">
-                                        <div>{id.slice(0, 5) + "..." + id.slice(-5)}</div>
-                                        <div className="text-xs text-muted-foreground">
-                                            {formatSuiAmount(manager.balance.value)}
+            <div
+                className={cn("flex flex-row justify-between h-[200px] my-4", Object.entries(balanceManagerData).length > 0 ? "w-[600px]" : "w-[300px]")}>
+                {balanceManagerData.length > 0 &&
+                    <div className="w-1/3 flex flex-col border-r pr-4 h-full">
+                        <div className="flex flex-col justify-between h-full">
+                            <ScrollArea className="flex flex-col">
+                                {balanceManagerData.map((manager) => (
+                                    <Button
+                                        key={manager.id.id}
+                                        variant={manager.id.id === selectedBalanceManagerId && !newState ? "secondary" : "ghost"}
+                                        className="w-full mb-2"
+                                        onClick={() => {
+                                            setSelectedBalanceManagerId(manager.id.id);
+                                            setNewState(false);
+                                        }}
+                                    >
+                                        <div className="flex flex-col items-start w-full">
+                                            <div>{manager.id.id.slice(0, 5) + "..." + manager.id.id.slice(-5)}</div>
+                                            <div className="text-xs text-muted-foreground">
+                                                {formatSuiAmount(manager.balance)}
+                                            </div>
                                         </div>
-                                    </div>
-                                </Button>
-                            ))}
-                        </ScrollArea>
-                        <Button onClick={() => setNewState(true)} className="w-full h-auto"
-                                variant={"outline"}>
-                            <Plus className="size-4"/>
-                            <span className={"text-sm"}>New</span>
-                        </Button>
+                                    </Button>
+                                ))}
+                            </ScrollArea>
+                            <Button onClick={() => setNewState(true)} className="w-full h-auto"
+                                    variant={"outline"}>
+                                <Plus className="size-4"/>
+                                <span className={"text-sm"}>New</span>
+                            </Button>
+                        </div>
                     </div>
-                </div>
                 }
-                <div className={cn("", Object.entries(balanceManagerData).length > 0 ? "w-2/3 pl-4" : "w-full")}>
+                <div className={cn("", balanceManagerData.length > 0 ? "w-2/3 pl-4" : "w-full")}>
                     <div className={"flex flex-col h-full"}>
                         <div className={"flex-grow h-auto"}>
                             <h3 className={"font-semibold"}>
                                 {currentBalanceManager && !newState ?
-                                    currentBalanceManager.id.slice(0, 5) + "..." + currentBalanceManager.id.slice(-5)
+                                    <div className={"inline-flex gap-2 items-center"}>
+                                        <span>{currentBalanceManager.id.id.slice(0, 5) + "..." + currentBalanceManager.id.id.slice(-5)}</span>
+                                        <ClientCopyIcon value={currentBalanceManager.id.id} className="size-4"
+                                                        strokeWidth={2.5}/>
+                                    </div>
                                     :
-                                    (Object.entries(balanceManagerData).length > 0 ? "Create a new balance manager" : "Make your first deposit")}
+                                    (balanceManagerData.length > 0 ? "Create a new balance manager" : "Make your first deposit")}
                             </h3>
                             <p className={"text-sm text-muted-foreground mb-4"}>
-                                {(Object.entries(balanceManagerData).length > 0 ? "Manage your balance" : "You always still in control of your funds.")}
+                                {(balanceManagerData.length > 0 ? "Manage your balance" : "You always still in control of your funds.")}
                             </p>
 
                             <div className="flex flex-col gap-4">
                                 <div>
                                     <span
-                                        className="text-3xl font-semibold">{formatSuiAmount(newState ? 0 : currentBalanceManager?.balance.value ?? 0)}</span>
+                                        className="text-3xl font-semibold">{formatSuiAmount(newState ? 0 : currentBalanceManager?.balance ?? 0)}</span>
                                 </div>
                                 <Form {...form}>
                                     <form onSubmit={(e) => {

@@ -2,7 +2,7 @@
 import CoinFlipGame from "@/components/gameplay/coin-flip-game";
 import {useKeypair} from "@/components/providers/keypair-provider";
 import {useBalanceManager} from "@/components/providers/balance-manager-provider";
-import {useCurrentAccount, useSignAndExecuteTransaction, useSuiClient} from "@mysten/dapp-kit";
+import {useCurrentAccount, useSignTransaction} from "@mysten/dapp-kit";
 import {GameModel} from "@/api/models/openplay-coin-flip";
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
 import {Button} from "@/components/ui/button";
@@ -10,18 +10,24 @@ import {Transaction} from "@mysten/sui/transactions";
 import {useState} from "react";
 import BalanceManagerCard from "@/components/gameplay/balance-manager-card";
 import {useRouter} from "next/navigation";
+import Wallet from "@/components/sui/wallet";
+import {buildMintPlayCapTransaction} from "@/app/coin-flip/actions";
+import {executeAndWaitForTransactionBlock} from "@/app/actions";
 
 interface GameLauncherProps {
     data: GameModel;
+    house_id: string;
+    stakes: number[];
     className?: string;
 }
 
 export default function GameLauncher(props: GameLauncherProps) {
-    const corePackageId = process.env.NEXT_PUBLIC_CORE_PACKAGE_ID;
     const {back} = useRouter();
     const account = useCurrentAccount();
     const {keypair, activePlayCap: kpActivePlayCap, updatePlayCaps} = useKeypair();
     const [loadingRefresh, setLoadingRefresh] = useState(false);
+    
+    const {mutate: signTransaction} = useSignTransaction();
 
     const {
         currentBalanceManager,
@@ -29,22 +35,7 @@ export default function GameLauncher(props: GameLauncherProps) {
         refreshBalanceManagers
     } = useBalanceManager();
 
-    const suiClient = useSuiClient();
-    const {mutate: signAndExecuteTransaction} = useSignAndExecuteTransaction({
-        execute: async ({bytes, signature}) =>
-            await suiClient.executeTransactionBlock({
-                transactionBlock: bytes,
-                signature,
-                options: {
-                    // Raw effects are required so the effects can be reported back to the wallet
-                    showRawEffects: true,
-                    // Select additional data to return
-                    showObjectChanges: true,
-                },
-            }),
-    });
-
-    const handleRefresh = () => {
+    const handleRefresh = async () => {
 
         if (!account || !keypair) {
             console.error('Account not found');
@@ -60,30 +51,19 @@ export default function GameLauncher(props: GameLauncherProps) {
             console.error('Balance manager cap not found');
             return;
         }
-
-        const tx = new Transaction();
-
-        // Transfer the play cap
-        const [play_cap] = tx.moveCall({
-            target: `${corePackageId}::balance_manager::mint_play_cap`,
-            arguments: [
-                tx.object(currentBalanceManager.id),
-                tx.object(currentBalanceManagerCap.id),
-            ],
-        });
-        tx.transferObjects([play_cap], keypair.toSuiAddress());
+        
+        const bytes = await buildMintPlayCapTransaction(account.address, currentBalanceManager.id.id, currentBalanceManagerCap.id.id, keypair.toSuiAddress());
+        const tx = Transaction.from(bytes);
         
         setLoadingRefresh(true);
 
-        signAndExecuteTransaction({
+        signTransaction({
                 transaction: tx
             },
             {
                 onSuccess: (result) => {
-                    console.log('Transaction executed', result);
-                    suiClient.waitForTransaction({
-                        digest: result.digest
-                    }).then(() => {
+                    // console.log('Transaction executed', result);
+                    executeAndWaitForTransactionBlock(result.bytes, result.signature).then(() => {
                         setLoadingRefresh(false);
                         refreshBalanceManagers();
                         updatePlayCaps();
@@ -99,7 +79,7 @@ export default function GameLauncher(props: GameLauncherProps) {
     }
 
     return (
-        <div className={"flex justify-center items-center h-full w-full"}>
+        <div className={"flex flex-grow justify-center items-center h-full w-full bg-muted rounded-l-md"}>
             
             {!account && <Card>
                 <CardHeader>
@@ -110,9 +90,12 @@ export default function GameLauncher(props: GameLauncherProps) {
                         Please connect your wallet and set up a balance manager to start playing.
                     </CardDescription>
                 </CardHeader>
+                <CardContent>
+                    <Wallet></Wallet>
+                </CardContent>
             </Card>}
             {account && !currentBalanceManager && <BalanceManagerCard />}
-            {kpActivePlayCap && account && <CoinFlipGame data={props.data} onClose={() => {
+            {kpActivePlayCap && account && <CoinFlipGame stakes={props.stakes} house_id={props.house_id} game={props.data} onClose={() => {
                 back();
             }}/>
             }

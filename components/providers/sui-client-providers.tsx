@@ -16,14 +16,17 @@ const queryClient = new QueryClient();
 const {networkConfig} = createNetworkConfig({
     localnet: {url: getFullnodeUrl('localnet')},
     mainnet: {url: getFullnodeUrl('mainnet')},
+    testnet: {url: getFullnodeUrl('testnet')},
+    devnet: {url: getFullnodeUrl('devnet')}
 });
 
 export default function SuiClientProviders({children}: { children: React.ReactNode }) {
 
-
+    const network = process.env.NEXT_PUBLIC_NETWORK as 'mainnet' | 'testnet' | 'devnet' | 'localnet';
+    
     return (
         <QueryClientProvider client={queryClient}>
-            <SuiClientProvider networks={networkConfig} defaultNetwork="localnet">
+            <SuiClientProvider networks={networkConfig} defaultNetwork={network}>
                 <WalletProvider autoConnect>
                     {children}
                 </WalletProvider>

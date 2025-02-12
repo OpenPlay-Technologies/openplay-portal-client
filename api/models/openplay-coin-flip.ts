@@ -1,5 +1,4 @@
-﻿import {Table, VecSet} from "@/api/models/shared-models";
-import {HouseTransactionCapModel} from "@/api/models/openplay-core";
+﻿import {MoveObject, Table, Uid, VecSet} from "@/api/models/shared-models";
 
 export const errorMessages: Record<string, Record<number, string>> = {
     context: {
@@ -35,18 +34,14 @@ export interface CoinFlipStateModel {
 }
 
 export interface GameModel {
-    id: string;
-    allowed_versions: VecSet<bigint>;
+    id: Uid;
+    allowed_versions: MoveObject<VecSet<bigint>>;
+    min_stake: bigint,
     max_stake: bigint,
     house_edge_bps: bigint, // House bias in basis points (e.g. `100` will give the house a 1% change of winning)
     payout_factor_bps: bigint, // Payout factor in basis points (e.g. `20_000` will give 2x or 200% of stake)
-    house_tx_cap: HouseTransactionCapModel,
-    contexts: Table,
-    state: CoinFlipStateModel, // Global state specific to the CoinFLip game
-}
-
-export interface CoinFlipCapModel {
-    id: string;
+    contexts: MoveObject<Table>,
+    state: MoveObject<CoinFlipStateModel>, // Global state specific to the CoinFLip game
 }
 
 export interface InteractionTypeModel {
@@ -65,4 +60,5 @@ export interface InteractedWithGameModel {
     old_balance: bigint;
     new_balance: bigint;
     context: CoinFlipContextModel;
+    balance_manager_id: string;
 }

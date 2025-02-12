@@ -1,6 +1,6 @@
 ﻿"use client"
 
-import {useCurrentAccount, useSignAndExecuteTransaction, useSuiClient} from "@mysten/dapp-kit";
+import {useCurrentAccount, useSignTransaction} from "@mysten/dapp-kit";
 import Wallet from "@/components/sui/wallet";
 import {Form, FormControl, FormField, FormItem, FormMessage} from "@/components/ui/form";
 import {Input} from "@/components/ui/input";
@@ -12,6 +12,9 @@ import {z} from "zod";
 import {zodResolver} from "@hookform/resolvers/zod";
 import {Transaction} from "@mysten/sui/transactions";
 import {useRouter} from "next/navigation";
+import {buildTransferFundsTransaction} from "@/app/gas-station/actions";
+import {executeAndWaitForTransactionBlock} from "@/app/actions";
+import {useToast} from "@/hooks/use-toast";
 
 const transactSchema = z.object({
     amount: z
@@ -27,23 +30,12 @@ interface FundSponsorProps {
 export default function FundSponsor(props: FundSponsorProps) {
     const router = useRouter();
     const account = useCurrentAccount();
+    const {toast} = useToast();
 
     const [loading, setLoading] = useState<boolean>(false);
 
-    const suiClient = useSuiClient();
-    const {mutate: signAndExecuteTransaction} = useSignAndExecuteTransaction({
-        execute: async ({bytes, signature}) =>
-            await suiClient.executeTransactionBlock({
-                transactionBlock: bytes,
-                signature,
-                options: {
-                    // Raw effects are required so the effects can be reported back to the wallet
-                    showRawEffects: true,
-                    // Select additional data to return
-                    showObjectChanges: true,
-                },
-            }),
-    });
+    const {mutate: signTransaction} = useSignTransaction();
+
 
     // Initialize the form
     const form = useForm<z.infer<typeof transactSchema>>({
@@ -53,23 +45,27 @@ export default function FundSponsor(props: FundSponsorProps) {
     // Handle successful form submission
     async function submitTransaction(values: z.infer<typeof transactSchema>) {
 
-        const tx = new Transaction();
-        const amountInMist = values.amount * 1e9;
+        if (!account) {
+            toast({
+                variant:"destructive",
+                title: 'Account not found',
+                description: 'Please connect your wallet',
+            })
+            return;
+        }
 
-        const [coin] = tx.splitCoins(tx.gas, [amountInMist]);
-        tx.transferObjects([coin], props.sponsorAddress);
-
-        signAndExecuteTransaction({
+        const bytes = await buildTransferFundsTransaction(account.address, props.sponsorAddress, values.amount);
+        
+        const tx = Transaction.from(bytes);
+        signTransaction({
                 transaction: tx
             },
             {
                 onSuccess: (result) => {
-                    console.log('Transaction executed', result);
+                    // console.log('Transaction executed', result);
                     setLoading(true);
-                    suiClient.waitForTransaction({
-                        digest: result.digest
-                    }).then(() => {
-                        console.log('Transaction finished');
+                    executeAndWaitForTransactionBlock(result.bytes, result.signature).then(() => {
+                      // console.log('Transaction finished');
                         router.refresh();
                         setLoading(false);
                         form.reset();

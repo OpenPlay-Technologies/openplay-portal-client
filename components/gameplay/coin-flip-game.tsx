@@ -4,22 +4,27 @@ import {useCallback, useEffect, useRef, useState} from "react";
 import {mistToSUI} from "@/lib/utils";
 import {useBalanceManager} from "@/components/providers/balance-manager-provider";
 import {fetchCoinflipContext} from "@/api/queries/coin-flip";
-import {useCurrentAccount, useSuiClient} from "@mysten/dapp-kit";
+import {useCurrentAccount} from "@mysten/dapp-kit";
 import {Transaction} from "@mysten/sui/transactions";
 import {getCoinFlipErrorMessage} from "@/lib/error-messages";
 import {useKeypair} from "@/components/providers/keypair-provider";
-import {sponsoredInteractCoinFlip} from "@/app/actions";
+import {
+    buildSponsoredCoinFlipTransaction,
+    executeSponsoredTransact,
+    waitForTransaction
+} from "@/app/actions";
 import {CoinFlipContextModel, GameModel, InteractedWithGameModel} from "@/api/models/openplay-coin-flip";
-import {PlayCapModel, RegistryModel} from "@/api/models/openplay-core";
-import {fetchRegistry} from "@/api/queries/registry";
+import {PlayCapModel} from "@/api/models/openplay-core";
+import {INTERACT_EVENT_TYPE} from "@/api/coinflip-constants";
 
 interface GameProps {
-    data: GameModel;
+    game: GameModel;
+    house_id: string;
     onClose: () => void;
+    stakes: number[];
 }
 
 export default function CoinFlipGame(props: GameProps) {
-    const coinFlipPackageId = process.env.NEXT_PUBLIC_COIN_FLIP_PACKAGE_ID;
     const account = useCurrentAccount();
     const {
         selectedBalanceManagerId,
@@ -27,14 +32,13 @@ export default function CoinFlipGame(props: GameProps) {
         currentBalanceManager,
     } = useBalanceManager();
     const {keypair, playCaps} = useKeypair();
-    const suiClient = useSuiClient();
     const [currentPlayCap, setCurrentPlayCap] = useState<PlayCapModel | null>(null);
     const [gameContext, setGameContext] = useState<CoinFlipContextModel | null>(null);
     const [gameOngoing, setGameOngoing] = useState<boolean>(false);
     const prevGameOngoing = useRef(gameOngoing);
-    const [registry, setRegistry] = useState<RegistryModel | null>(null);
-    const [tempBalance, setTempBalance] = useState<number>(currentBalanceManager?.balance?.value ?? 0);
-    
+    const [tempBalance, setTempBalance] = useState<number>(currentBalanceManager?.balance ?? 0);
+    const [selectedStakeIndex, setSelectedStakeIndex] = useState<number>(0);
+
     // Set up rive
     const {rive, RiveComponent} = useRive({
         src: '/sui-vs-sol.riv',
@@ -49,47 +53,35 @@ export default function CoinFlipGame(props: GameProps) {
     useEffect(() => {
         const resize = () => {
             rive?.resizeDrawingSurfaceToCanvas();
-            console.log(window.innerWidth, window.innerHeight);
+            // console.log(window.innerWidth, window.innerHeight);
         };
 
         resize(); // Call on initial render
         window.addEventListener("resize", resize); // Add resize listener
 
         return () => window.removeEventListener("resize", resize); // Cleanup listener
-    }, [rive, window, currentBalanceManager, account]);
+    }, [rive, currentBalanceManager, account]);
 
     useEffect(() => {
-        setTempBalance(currentBalanceManager?.balance?.value ?? 0);
+        setTempBalance(currentBalanceManager?.balance ?? 0);
         const resize = () => {
             rive?.resizeDrawingSurfaceToCanvas();
-            console.log(window.innerWidth, window.innerHeight);
+            // console.log(window.innerWidth, window.innerHeight);
         };
 
         resize(); // Call on initial render
         window.addEventListener("resize", resize); // Add resize listener
 
         return () => window.removeEventListener("resize", resize); // Cleanup listener
-    }, [rive, window, currentBalanceManager, account]);
+    }, [rive, currentBalanceManager, account]);
 
     // Fetch the play cap for the current balance manager
     useEffect(() => {
         if (currentBalanceManager) {
-            setCurrentPlayCap(playCaps.find(x => x.balance_manager_id == currentBalanceManager.id) ?? null);
+            setCurrentPlayCap(playCaps.find(x => x.balance_manager_id == currentBalanceManager.id.id) ?? null);
         }
     }, [currentBalanceManager, playCaps]);
-    
-    // Fetch the registry
-    const updateRegistry = useCallback(async () => {
-        const registry = await fetchRegistry();
-        if (registry){
-            setRegistry(registry);
-        }
-    }, []);
-    
-    useEffect(() => {
-        updateRegistry();
-    }, [updateRegistry]);
-    
+
 
     // Display error message in rive
     const showError = useCallback((errorMsg: string) => {
@@ -102,6 +94,8 @@ export default function CoinFlipGame(props: GameProps) {
 
     // Handle error message: parse it and display it
     const handleError = useCallback((rawErrorMsg: string) => {
+        setTempBalance(currentBalanceManager?.balance ?? 0);
+
         // Regex to capture the name inside `Identifier("...")`
         const moduleNameRegex = /name: Identifier\("([^"]+)"\)/;
 
@@ -124,7 +118,7 @@ export default function CoinFlipGame(props: GameProps) {
         } else {
             showError(getCoinFlipErrorMessage(moduleName, errorNumber));
         }
-    }, [showError]);
+    }, [showError, currentBalanceManager?.balance]);
 
 
     // Callback for updating the game context
@@ -134,12 +128,14 @@ export default function CoinFlipGame(props: GameProps) {
             console.error('No game or balance manager found');
             return;
         }
-
-        const context = await fetchCoinflipContext(props.data.contexts.id, selectedBalanceManagerId);
-        console.log(context);
+        const context = await fetchCoinflipContext(props.game.contexts.fields.id.id, selectedBalanceManagerId);
         setGameContext(context ?? null);
-    }, [props.data.contexts.id, selectedBalanceManagerId]);
-    
+    }, [props.game.contexts.fields.id, selectedBalanceManagerId]);
+
+    useEffect(() => {
+        updateContext();
+    }, [updateContext]);
+
     // Callback for starting the flipping animation - result is unknown at this point
     const startFlippingAnimation = useCallback(() => {
         rive?.fireStateAtPath("Start flip", "Coin flip v2");
@@ -151,7 +147,7 @@ export default function CoinFlipGame(props: GameProps) {
 
     // Callback for updating the UI in rive to the given inputs
     const updateUI = useCallback((balanceValue: number, winValue: number, disableButton: boolean) => {
-        console.log("Updating UI", balanceValue, winValue, disableButton);
+        // console.log("Updating UI", balanceValue, winValue, disableButton);
         rive?.setTextRunValue("Balance Value Run", mistToSUI(Number(balanceValue)));
         rive?.setTextRunValue("Win Value Run", mistToSUI(Number(winValue)));
         const disableButtonInput = rive?.stateMachineInputs("State Machine 1").find(x => x.name == "Disable button");
@@ -160,9 +156,32 @@ export default function CoinFlipGame(props: GameProps) {
         }
     }, [rive]);
 
+
+    const updateStake = useCallback((stakeIndex: number) => {
+        if (stakeIndex < 0 || stakeIndex >= props.stakes.length) {
+            console.error('Invalid stake index');
+            return;
+        }
+        const stakeValue = props.stakes[stakeIndex];
+        const canIncrease = stakeIndex < props.stakes.length - 1;
+        const canDecrease = stakeIndex > 0;
+
+        rive?.setTextRunValue("Bet Value Run", mistToSUI(Number(stakeValue)));
+
+        const allowStakeIncreaseInput = rive?.stateMachineInputs("State Machine 1").find(x => x.name == "Allow stake increase");
+        if (allowStakeIncreaseInput) {
+            allowStakeIncreaseInput.value = canIncrease;
+        }
+        const allowStakeDecreaseInput = rive?.stateMachineInputs("State Machine 1").find(x => x.name == "Allow stake decrease");
+        if (allowStakeDecreaseInput) {
+            allowStakeDecreaseInput.value = canDecrease;
+        }
+
+    }, [rive, props.stakes]);
+
     // Callback for flipping the coin to the result. This is from mid-air to the result once it is known to us
     const flipToResult = useCallback((result: string) => {
-        console.log("Flipping to result", result);
+        // console.log("Flipping to result", result);
         if (result == "Head") {
             rive?.setBooleanStateAtPath("End sui", true, "Coin flip v2");
         } else if (result == "Tail") {
@@ -173,12 +192,12 @@ export default function CoinFlipGame(props: GameProps) {
     }, [rive]);
 
 // Callback for pressing the play button
-    const handleInteract = useCallback(() => {
-        console.log("Handling interact");
-        const startTime = performance.now();
+    const handleInteract = useCallback(async () => {
+        // console.log("Handling interact");
+        // const startTime = performance.now();
 
-        if (!selectedBalanceManagerId || !keypair || !registry) {
-            console.error('No game or balance manager found');
+        if (!selectedBalanceManagerId || !keypair) {
+            console.error('No kepair or balance manager found');
             return;
         }
 
@@ -196,103 +215,81 @@ export default function CoinFlipGame(props: GameProps) {
 
         const prediction = input == 0 ? "Head" : "Tail";
 
-        // TODO: make stake dynamic
-        const stake = 1e9;
+        // console.log("Requesting sponsored Tx");
 
-        console.log("Requesting sponsored Tx");
+        const stake = props.stakes[selectedStakeIndex];
 
         // Set game ongoing to true before getting any response to make it feel more responsive
         setTempBalance(tempBalance - stake);
         setGameOngoing(true);
-        
 
-        const transactionConstructedTime = performance.now();
-        console.log(`Transaction constructed: ${transactionConstructedTime - startTime} ms`);
 
-        sponsoredInteractCoinFlip(
-            keypair.toSuiAddress(),
-            registry.id,
-            selectedBalanceManagerId,
-            props.data.house_tx_cap.house_id,
-            currentPlayCap.id,
-            props.data.id,
-            Number(stake),
-            prediction
-        )
-            .then((sponsorSignature) => {
-                const sponsorSignedTime = performance.now();
-                console.log(`Sponsor signed: ${sponsorSignedTime - startTime} ms`);
+        // const transactionConstructedTime = performance.now();
+        // console.log(`Transaction constructed: ${transactionConstructedTime - startTime} ms`);
 
-                const tx = Transaction.from(sponsorSignature.bytes);
-                
-                tx.sign({
-                    signer: keypair,
-                    client: suiClient
-                })
-                    .then((senderSignature) => {
-                        const transactionSignedTime = performance.now();
-                        console.log(`Transaction signed: ${transactionSignedTime - startTime} ms`);
+        try {
+            const sponsorSignature = await buildSponsoredCoinFlipTransaction(
+                keypair.toSuiAddress(),
+                selectedBalanceManagerId,
+                props.house_id,
+                currentPlayCap.id.id,
+                props.game.id.id,
+                Number(stake),
+                prediction
+            );
 
-                        suiClient.executeTransactionBlock({
-                            transactionBlock: sponsorSignature.bytes,
-                            signature: [sponsorSignature.signature, senderSignature.signature],
-                            options: {
-                                showEvents: true,
-                            }
-                        })
-                            .then((result) => {
-                                const transactionExecutedTime = performance.now();
-                                console.log(`Transaction executed: ${transactionExecutedTime - startTime} ms`);
-                                console.log(JSON.stringify(result));
-                                const interactEventType = `${coinFlipPackageId}::game::InteractedWithGame`
-                                const interactEvent = result.events?.find(x => x.type == interactEventType);
-                                
-                                if (!interactEvent){
-                                    showError("No interact event found");
-                                    return;
-                                }
-                                                                
-                                const parsedEvent = interactEvent.parsedJson as InteractedWithGameModel;
-                                setTempBalance(Number(parsedEvent.new_balance));
-                                setGameContext(parsedEvent.context);
 
-                                suiClient.waitForTransaction({
-                                    digest: result.digest
-                                })
-                                    .then(() => {
-                                        const transactionCompletedTime = performance.now();
-                                        console.log(`Waiting for transaction completed: ${transactionCompletedTime - startTime} ms`);
-                                        Promise.all([refreshBalanceManagers()]);
-                                    })
-                                    .catch((error) => {
-                                        console.error(error.message);
-                                        handleError(error.message);
-                                    });
-                            })
-                            .catch((error) => {
-                                console.error(error.message);
-                                handleError(error.message);
-                            });
-                    })
-                    .catch((error) => {
-                        console.error(error.message);
-                        handleError(error.message);
-                    });
-
-                console.log("Executing Sponsored Tx");
-            })
-            .catch((error) => {
-                console.error(error.message);
-                handleError(error.message);
+            const tx = Transaction.from(sponsorSignature.bytes);
+            const senderSignature = await tx.sign({
+                signer: keypair,
             });
-    }, [currentPlayCap, handleError, keypair, props.data.id, refreshBalanceManagers, rive, selectedBalanceManagerId, suiClient, updateContext, tempBalance]);
+
+            const result = await executeSponsoredTransact(sponsorSignature.bytes, senderSignature.signature, sponsorSignature.signature);
+
+            const interactEvent = result.events?.find(x => x.type == INTERACT_EVENT_TYPE);
+            let eventFound = false;
+
+            if (interactEvent) {
+                eventFound = true;
+                const parsedEvent = interactEvent.parsedJson as InteractedWithGameModel;
+                setTempBalance(Number(parsedEvent.new_balance));
+                setGameContext(parsedEvent.context);
+            }
+
+            waitForTransaction(result.digest).then(result => {
+                const interactEvent = result.events?.find(x => x.type == INTERACT_EVENT_TYPE);
+
+                if (interactEvent && !eventFound) {
+                    const parsedEvent = interactEvent.parsedJson as InteractedWithGameModel;
+                    setTempBalance(Number(parsedEvent.new_balance));
+                    setGameContext(parsedEvent.context);
+                }
+
+                // const transactionCompletedTime = performance.now();
+                // console.log(`Waiting for transaction completed: ${transactionCompletedTime - startTime} ms`);
+                Promise.all([refreshBalanceManagers()]);
+            })
+                .catch((error) => {
+                    console.error(error.message);
+                    handleError(error.message);
+                });
+        } catch (error) {
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
+            console.error(error.message);
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
+            handleError(error.message);
+        }
+
+    }, [selectedBalanceManagerId, keypair, currentPlayCap, rive, props.stakes, props.house_id, props.game.id.id, selectedStakeIndex, tempBalance, handleError, refreshBalanceManagers]);
 
 
     // Keep rive in sync with the react state
     useEffect(() => {
         // Game was started
         if (!prevGameOngoing.current && gameOngoing) {
-            
+
             updateUI(
                 tempBalance,
                 0,
@@ -317,9 +314,16 @@ export default function CoinFlipGame(props: GameProps) {
         prevGameOngoing.current = gameOngoing;
     }, [tempBalance, flipToResult, gameContext, gameOngoing, startFlippingAnimation, updateUI]);
 
+    // Keep the state in sync with react state
+    useEffect(() => {
+        if (selectedStakeIndex >= 0 && selectedStakeIndex < props.stakes.length) {
+            updateStake(selectedStakeIndex);
+        }
+    }, [updateStake, gameContext, selectedStakeIndex, props.stakes.length]);
+
 
     const onRiveEventReceived = useCallback((riveEvent: Event) => {
-        console.log("Event received", riveEvent);
+        // console.log("Event received", riveEvent);
         const eventData = riveEvent.data as RiveEventPayload;
         if (!eventData) {
             return;
@@ -337,7 +341,15 @@ export default function CoinFlipGame(props: GameProps) {
         if (eventData.name == "CloseButtonClicked") {
             props.onClose();
         }
-    }, [handleInteract, props]);
+        // Stake increase
+        if (eventData.name == "StakeIncreased") {
+            setSelectedStakeIndex(selectedStakeIndex + 1);
+        }
+        // Stake decrease
+        if (eventData.name == "StakeDecreased") {
+            setSelectedStakeIndex(selectedStakeIndex - 1);
+        }
+    }, [handleInteract, props, selectedStakeIndex]);
 
     useEffect(() => {
         if (rive) {
@@ -348,7 +360,7 @@ export default function CoinFlipGame(props: GameProps) {
 
     return (
         <RiveComponent
-            className={"w-full h-full"}
+            className="w-full h-full min-w-[500px] min-h-[650px] select-none"
         />
     )
 }

@@ -2,8 +2,8 @@
 
 import {graphql} from '@mysten/sui/graphql/schemas/2024.4';
 
-const corePackageId = process.env.NEXT_PUBLIC_CORE_PACKAGE_ID;
-const coinFlipPackageId = process.env.NEXT_PUBLIC_COIN_FLIP_PACKAGE_ID;
+const corePackageId = process.env.NEXT_PUBLIC_INITIAL_CORE_PACKAGE_ID;
+const coinFlipPackageId = process.env.NEXT_PUBLIC_INITIAL_COIN_FLIP_PACKAGE_ID;
 
 export const GET_ACCOUNT_BALANCE = graphql(`
     query ($address: String!) {
@@ -231,7 +231,7 @@ export const GET_ALL_COIN_FLIPS = graphql(`
 export const GET_RECENT_COIN_FLIP_TRANSACTIONS = graphql(`
     query {
         transactionBlocks(
-            last: 10,
+            last: 50,
             filter: {
                 function: "${coinFlipPackageId + "::game" + "::interact"}"
             }

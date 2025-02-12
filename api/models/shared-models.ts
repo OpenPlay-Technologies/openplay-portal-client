@@ -4,8 +4,12 @@ export interface Balance {
     value: number
 }
 
+export interface Uid {
+    id: string;
+}
+
 export interface Table {
-    id: string,
+    id: Uid,
     size: number
 }
 
@@ -17,13 +21,14 @@ export interface VecMap<TKey, TValue> {
     contents: Map<TKey, TValue>
 }
 
-export interface Sender {
-    address: string
+export interface MoveObject<T> {
+    type: string;
+    fields: T;
 }
 
-export interface ObjectData {
-    address: string;
-    version: number;
-    digest: string;
+
+export interface DynamicObjectValue<T> {
+    id: Uid;
+    name: string;
+    value: MoveObject<T>
 }
-    

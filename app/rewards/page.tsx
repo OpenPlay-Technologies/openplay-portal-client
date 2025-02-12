@@ -1,16 +1,14 @@
 ﻿"use client"
 
 import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs"
-import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card"
+import {Card, CardDescription, CardHeader, CardTitle} from "@/components/ui/card"
 import {useCallback, useEffect, useState} from "react";
 import {useCurrentAccount} from "@mysten/dapp-kit";
 import {fetchAllParticipations} from "@/api/queries/participation";
 import ParticipationRewards from "@/components/rewards/participation-rewards";
 import {fetchAllHouseAdminCaps} from "@/api/queries/house-cap";
 import HouseOwnerRewards from "@/components/rewards/house-owner-rewards";
-import ReferralRewards from "@/components/rewards/referral-rewards";
-import {fetchAllOwnedReferrals} from "@/api/queries/referrals";
-import {HouseAdminCapModel, ParticipationModel, ReferralModel} from "@/api/models/openplay-core";
+import {HouseAdminCapModel, ParticipationModel} from "@/api/models/openplay-core";
 export default function RewardsPage() {
     const [activeTab, setActiveTab] = useState('house-participation');
 
@@ -46,19 +44,19 @@ export default function RewardsPage() {
         updateGameCapData();
     }, [updateGameCapData]);
     
-    // Referrals
-    const [referralData, setReferralData] = useState<ReferralModel[]>([]);
-    const updateReferralData = useCallback(async () => {
-        if (!account?.address) {
-            setReferralData([]);
-            return;
-        }
-        const referrals = await fetchAllOwnedReferrals(account.address);
-        setReferralData(referrals);
-    }, [account]);
-    useEffect(() => {
-        updateReferralData();
-    }, [updateReferralData]);
+    // // Referrals
+    // const [referralData, setReferralData] = useState<ReferralModel[]>([]);
+    // const updateReferralData = useCallback(async () => {
+    //     if (!account?.address) {
+    //         setReferralData([]);
+    //         return;
+    //     }
+    //     const referrals = await fetchAllOwnedReferrals(account.address);
+    //     setReferralData(referrals);
+    // }, [account]);
+    // useEffect(() => {
+    //     updateReferralData();
+    // }, [updateReferralData]);
 
 
     return (
@@ -75,8 +73,8 @@ export default function RewardsPage() {
                         <TabsTrigger value="house-owner">
                             <span className={"p-1"}>Owner ({houseAdminCapData.length})</span>
                         </TabsTrigger>
-                        <TabsTrigger value="protocol">
-                            <span className={"p-1"}>Referral ({referralData.length})</span>
+                        <TabsTrigger value="referral" disabled>
+                            <span className={"p-1"}>Referral</span>
                         </TabsTrigger>
                     </TabsList>
 
@@ -98,12 +96,12 @@ export default function RewardsPage() {
                         <HouseOwnerRewards houseAdminCapData={houseAdminCapData} updateGameCapData={updateGameCapData} />
                     </TabsContent>
 
-                    <TabsContent value="protocol">
-                        <CardHeader>
-                            <CardTitle>Protocol Rewards</CardTitle>
-                            <CardDescription>Coming soon</CardDescription>
+                    <TabsContent value="referral">
+                        <CardHeader className={"px-0"}>
+                            <CardTitle>Referral Program</CardTitle>
+                            <CardDescription>Coming soon.</CardDescription>
                         </CardHeader>
-                        <ReferralRewards referralData={referralData} updateReferralData={updateReferralData} />
+                        {/*<ReferralRewards referralData={referralData} updateReferralData={updateReferralData} />*/}
                     </TabsContent>
                 </Tabs>
             </Card>

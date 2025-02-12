@@ -7,7 +7,7 @@ export default function GamesPage() {
         <div>
             <Banner />
             {/*<CoinFlipGrid />*/}
-            <CoinFlipSlider title={"Coin Flip"} />
+            <CoinFlipSlider />
         </div>
     );
 }

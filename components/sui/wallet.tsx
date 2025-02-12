@@ -39,7 +39,7 @@ export default function Wallet(props: WalletProps) {
             {account && <Popover >
                 <PopoverTrigger>
                     <NavButton
-                        text={formatSuiAmount(currentBalanceManager?.balance.value ?? 0)}
+                        text={formatSuiAmount(currentBalanceManager?.balance ?? 0)}
                         icon={<WalletIcon className="w-6 h-6" />}
                         light={props.transparent}
                     />

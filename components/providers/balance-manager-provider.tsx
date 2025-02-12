@@ -5,7 +5,6 @@ import { useCurrentAccount } from "@mysten/dapp-kit";
 import {
     fetchAllBalanceManagerCaps,
     fetchAllPlayCaps,
-    fetchBalanceManagerCapByTxDigest,
     fetchBalanceManagersByIds
 } from "@/api/queries/balance-manager";
 import {BalanceManagerCapModel, BalanceManagerModel, PlayCapModel} from "@/api/models/openplay-core";
@@ -15,13 +14,12 @@ export interface BalanceManagerProviderContext {
     setSelectedBalanceManagerId: (manager: string | null) => void;
     currentBalanceManager: BalanceManagerModel | null;
     balanceManagerCaps: BalanceManagerCapModel[];
-    balanceManagerData: Record<string, BalanceManagerModel>;
+    balanceManagerData: BalanceManagerModel[];
     currentManagerPlayCaps: PlayCapModel[];
     refreshBalanceManagerCaps: () => Promise<void>; // Expose this function for manual refresh
     refreshBalanceManagers: () => Promise<void>; // Expose this function for manual refresh
     refreshPlayCaps: () => Promise<void>; // Expose this function for manual refresh
     currentBalanceManagerCap: BalanceManagerCapModel | null;
-    setBalanceManagerIdByTxDigest: (txDigest: string) => void;
 }
 
 export const BalanceManagerContext = createContext<BalanceManagerProviderContext | null>(null);
@@ -31,12 +29,12 @@ export const BalanceManagerProvider: React.FC<{ children: React.ReactNode }> = (
     const [selectedBalanceManagerId, setSelectedBalanceManagerId] = useState<string | null>(null);
     const [currentBalanceManager, setCurrentBalanceManager] = useState<BalanceManagerModel | null>(null);
     const [balanceManagerCaps, setBalanceManagerCaps] = useState<BalanceManagerCapModel[]>([]);
-    const [balanceManagerData, setBalanceManagerData] = useState<Record<string, BalanceManagerModel>>({});
+    const [balanceManagerData, setBalanceManagerData] = useState<BalanceManagerModel[]>([]);
     const [currentManagerPlayCaps, setCurrentManagerPlayCaps] = useState<PlayCapModel[]>([]);
     const [currentBalanceManagerCap, setCurrentBalanceManagerCap] = useState<BalanceManagerCapModel | null>(null);
 
     useEffect(() => {
-        setCurrentBalanceManager(selectedBalanceManagerId ? balanceManagerData[selectedBalanceManagerId] : null);
+        setCurrentBalanceManager(selectedBalanceManagerId ? balanceManagerData.find(x => x.id.id == selectedBalanceManagerId) ?? null : null);
     }, [balanceManagerData, selectedBalanceManagerId]);
 
     useEffect(() => {
@@ -49,6 +47,10 @@ export const BalanceManagerProvider: React.FC<{ children: React.ReactNode }> = (
         }
     }, [balanceManagerCaps, selectedBalanceManagerId]);
 
+    useEffect(() => {
+        console.log("Selected balance manager id:", selectedBalanceManagerId);
+    }, [selectedBalanceManagerId]);
+
     const fetchBalanceManagerCaps = useCallback(async () => {
         if (!account?.address) {
             return;
@@ -59,7 +61,7 @@ export const BalanceManagerProvider: React.FC<{ children: React.ReactNode }> = (
         } catch (error) {
             console.error("Failed to fetch balance managers:", error);
         }
-    }, [account]);
+    }, [account?.address]);
 
     const fetchBalanceManagers = useCallback(async () => {
         if (!account?.address) {
@@ -67,20 +69,18 @@ export const BalanceManagerProvider: React.FC<{ children: React.ReactNode }> = (
         }
         try {
             const fetchedBalanceManagers = await fetchBalanceManagersByIds(balanceManagerCaps.map((cap) => cap.balance_manager_id));
-            const sortedObject = Object.fromEntries(
-                Object.entries(fetchedBalanceManagers)
-                    .sort(([, a], [, b]) => b.balance.value - a.balance.value) // Sorting in descending order
-            );            
-            setBalanceManagerData(sortedObject);
-            //setBalanceManagerData({});
-            // This OR condition is added so that you can switch wallets and the selected balance manager will be set to the first one in the list
-            if (Object.entries(sortedObject).length > 0 && (selectedBalanceManagerId == null || !sortedObject[selectedBalanceManagerId]) ){ 
-                setSelectedBalanceManagerId(Object.entries(sortedObject)[0][0]);
-            }
+            const sortedBalanceManagers = fetchedBalanceManagers.sort((a, b) => b.balance - a.balance); // Sorting in descending order
+            setBalanceManagerData(sortedBalanceManagers);
         } catch (error) {
             console.error("Failed to fetch balance managers:", error);
         }
-    }, [account?.address, balanceManagerCaps, selectedBalanceManagerId]);
+    }, [account?.address, balanceManagerCaps]);
+
+    useEffect(() => {
+        if (!selectedBalanceManagerId && balanceManagerData.length > 0) {
+            setSelectedBalanceManagerId(balanceManagerData[0].id.id);
+        }
+    }, [selectedBalanceManagerId, balanceManagerData]);
     
     const fetchPlayCaps = useCallback(async () => {
         if (!account?.address) {
@@ -94,19 +94,6 @@ export const BalanceManagerProvider: React.FC<{ children: React.ReactNode }> = (
             console.error("Failed to fetch play caps:", error);
         }
     }, [account?.address, selectedBalanceManagerId]);
-    
-    const setBalanceManagerIdByTxDigest = useCallback( async (txDigest: string) => {
-        if (!account?.address){
-            return;
-        }
-        
-        console.log("Setting balance manager by tx digest", txDigest);
-        
-        const bmCap = await fetchBalanceManagerCapByTxDigest(account.address, txDigest);
-        if (bmCap){
-            setSelectedBalanceManagerId(bmCap.balance_manager_id);
-        }
-    }, [account?.address]);
 
     useEffect(() => {
         fetchBalanceManagerCaps(); // Fetch data initially
@@ -132,8 +119,7 @@ export const BalanceManagerProvider: React.FC<{ children: React.ReactNode }> = (
                 currentManagerPlayCaps,
                 refreshPlayCaps: fetchPlayCaps,
                 currentBalanceManager,
-                currentBalanceManagerCap,
-                setBalanceManagerIdByTxDigest
+                currentBalanceManagerCap
             }}
         >
             {children}
