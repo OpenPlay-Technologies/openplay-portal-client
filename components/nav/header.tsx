@@ -28,7 +28,7 @@ export default function Header() {
     }, []);
         
     return (
-        <header className={cn("flex-grow-0 sticky top-0 z-50 overflow-scroll",
+        <header className={cn("flex-grow-0 sticky top-0 z-50 overflow-auto",
             isScrolled || !isHomePage ? "bg-background border-b border-primary/20" : "bg-transparent")}>
             {network != "mainnet" && <NetworkInfoBar network={network}/>}
             <Navbar transparent={!isScrolled && isHomePage}/>
