@@ -28,7 +28,6 @@ export const fetchHouse = async (houseId: string): Promise<HouseModel | undefine
             }
         });
         if (response.data?.content?.dataType === "moveObject") {
-            console.log(response.data.content.fields);
             // @ts-ignore
             return response.data.content.fields as HouseModel;
         }
@@ -44,7 +43,7 @@ export const fetchAllHouses = async (): Promise<HouseModel[]> => {
     if (!registry?.houses || registry.houses.length === 0) {
         return []; // Return early if games is undefined or empty
     }
-    const data = await Promise.all(registry.houses.map(fetchHouse));
+    const data = await fetchHousesByIds(registry.houses);
     return data.filter((house) => house !== undefined) as HouseModel[];
 };
 

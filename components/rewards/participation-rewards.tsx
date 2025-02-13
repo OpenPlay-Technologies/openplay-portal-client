@@ -43,9 +43,10 @@ export default function ParticipationRewards(props: ParticipationRewardsProps) {
 
     // Fetch the game data for the participations
     const updateHouseData = useCallback(async () => {
-        if (!account?.address) {
+        if (!account?.address || props.participationData.length === 0) {
             return;
         }
+        console.log("Fetching house data for participations");
         const houseIds = props.participationData.map(participation => participation.house_id);
         const houseData = await fetchHousesByIds([...new Set(houseIds)]);
         setHouseData(houseData);
@@ -53,6 +54,10 @@ export default function ParticipationRewards(props: ParticipationRewardsProps) {
     useEffect(() => {
         updateHouseData();
     }, [updateHouseData]);
+
+    useEffect(() => {
+        console.log("Participation data changed", props.participationData);
+    }, [props.participationData]);
 
     // Update the participations
     async function handleUpdateAll() {

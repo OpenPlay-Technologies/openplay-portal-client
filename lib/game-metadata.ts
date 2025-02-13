@@ -1,4 +1,4 @@
-﻿const ENV = (process.env.NEXT_PUBLIC_NETWORK as "mainnet" | "devnet" | "testnet" | "localnet");
+﻿const ENV = (process.env.NEXT_PUBLIC_NETWORK as "mainnet" | "devnet" | "testnet" | "localnet" | undefined);
 
 const gameConfigs = {
     localnet: {
@@ -35,4 +35,4 @@ const gameConfigs = {
     },
 };
 
-export const gameMetaData = gameConfigs[ENV];
+export const gameMetaData = gameConfigs[ENV ?? "localnet"];

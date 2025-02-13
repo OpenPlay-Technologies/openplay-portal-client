@@ -21,9 +21,10 @@ export default function RewardsPage() {
             setParticipationData([]);
             return;
         }
+        console.log("Fetching participations");
         const participations = await fetchAllParticipations(account.address);
         setParticipationData(participations);
-    }, [account]);
+    }, [account?.address]);
 
     useEffect(() => {
         updateParticipationData();
@@ -38,7 +39,7 @@ export default function RewardsPage() {
         }
         const houseAdminCaps = await fetchAllHouseAdminCaps(account.address);
         setHouseAdminCapData(houseAdminCaps);
-    }, [account]);
+    }, [account?.address]);
 
     useEffect(() => {
         updateGameCapData();
