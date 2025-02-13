@@ -168,7 +168,7 @@ export default function GameSidePanel(props: SidePanelProps) {
 
             {/* FAQ overlay (Covers everything when open) */}
             {isFaqOpen && (
-                <div className="absolute inset-0 bg-background z-10 flex flex-col">
+                <div className="absolute w-64 inset-0 bg-background z-10 flex flex-col">
                     <div className="p-4 border-b inline-flex gap-2">
                         <button onClick={() => setIsFaqOpen(false)}>
                             <ChevronLeft className="size-6"/>
@@ -176,7 +176,7 @@ export default function GameSidePanel(props: SidePanelProps) {
                         <h2 className="text-lg font-semibold">FAQ</h2>
                     </div>
                     <ScrollArea className="flex-1 overflow-auto">
-                        <div className="p-4 space-y-6">
+                        <div className="p-4 space-y-6 w-64">
                             {faqSections.map((section) => (
                                 <div key={section.title}>
                                     <h3 className="text-md font-semibold p-2 bg-muted">{section.title}</h3>
