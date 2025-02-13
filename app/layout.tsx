@@ -10,6 +10,7 @@ import {ThemeProvider} from "@/components/providers/theme-provider";
 import Footer from "@/components/nav/footer";
 import {KeypairProvider} from "@/components/providers/keypair-provider";
 import {BalanceManagerProvider} from "@/components/providers/balance-manager-provider";
+import { Analytics } from "@vercel/analytics/react"
 
 const inter = Inter({subsets: ['latin']});
 
@@ -50,6 +51,7 @@ export default function RootLayout({children}: { children: React.ReactNode }) {
             </SuiClientProviders>
         </ThemeProvider>
         <Toaster/>
+        <Analytics />
         </body>
         </html>
     );
