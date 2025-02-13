@@ -12,7 +12,7 @@ export default function Footer() {
                         </p>
                         <div className="flex items-center justify-center md:justify-start space-x-6">
                             <Link
-                                href="https://x.com/OpenPlay_Tech"
+                                href="https://x.com/0x0687"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-muted-foreground hover:text-primary transition-colors"

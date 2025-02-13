@@ -179,16 +179,16 @@ export default function GameSidePanel(props: SidePanelProps) {
                         <div className="p-4 space-y-6">
                             {faqSections.map((section) => (
                                 <div key={section.title}>
-                                    <h3 className="text-md font-semibold mb-2">{section.title}</h3>
+                                    <h3 className="text-md font-semibold p-2 bg-muted">{section.title}</h3>
                                     <div className="space-y-2">
                                         {section.items.map((item, index) => (
-                                            <Collapsible key={index} className="border rounded">
+                                            <Collapsible key={index} className="rounded">
                                                 <CollapsibleTrigger
-                                                    className="w-full p-2 text-left flex items-center justify-between">
+                                                    className="w-full p-2 text-left flex items-center justify-between font-semibold">
                                                     <span>{item.question}</span>
                                                     <ChevronRight className="w-4 h-4 transition-transform"/>
                                                 </CollapsibleTrigger>
-                                                <CollapsibleContent className="p-2 text-sm">
+                                                <CollapsibleContent className="p-2 font-light">
                                                     {item.answer}
                                                 </CollapsibleContent>
                                             </Collapsible>
