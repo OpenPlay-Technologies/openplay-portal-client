@@ -1,15 +1,29 @@
-﻿import {fetchAllHouses} from "@/api/queries/house";
+﻿"use client"
+import {fetchAllHouses} from "@/api/queries/house";
 import {Card, CardDescription, CardHeader, CardTitle, CardContent} from "@/components/ui/card";
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table";
 import ClientCopyIcon from "@/components/ui/client-copy-icon";
 import Link from "next/link";
 import {formatSuiAmount} from "@/lib/utils";
 import {CheckIcon, PlusIcon, XIcon} from "lucide-react";
-import React from "react";
+import React, {useEffect} from "react";
 import { Button } from "@/components/ui/button";
+import {HouseModel} from "@/api/models/openplay-core";
 
-export default async function HouseOverviewPage() {
-    const houses = await fetchAllHouses();
+export default function HouseOverviewPage() {
+    
+    const [houses, setHouses] = React.useState<HouseModel[]>([]);
+
+    useEffect(() => {
+        
+        const func = async () => {
+            const data = await fetchAllHouses();
+            setHouses(data);
+        }
+
+        func();
+    }, []);
+    
     return (
         <Card className={"container mx-auto my-8"}>
             <CardHeader>
@@ -67,7 +81,7 @@ export default async function HouseOverviewPage() {
                                     {house.private ? "Private" : "Public"}
                                 </TableCell>
                                 <TableCell>
-                                    {formatSuiAmount(Number(house.state.fields.active_stake + house.state.fields.inactive_stake - house.state.fields.pending_unstake))}
+                                    {formatSuiAmount(Number(house.state.fields.active_stake) + Number(house.state.fields.inactive_stake) - Number(house.state.fields.pending_unstake))}
                                 </TableCell>
                                 <TableCell className={
                                     (Number(house.state.fields.all_time_profits) >= Number(house.state.fields.all_time_losses))
