@@ -123,7 +123,7 @@ export async function buildSponsoredCoinFlipTransaction(sender: string, balanceM
                 signature: sponsoredResponse.signature
             }
         } catch (e) {
-            // @ts-expect-error
+            // @ts-expect-error fff
             throw new Error("Error sponsoring transaction: " + e.data.details);
         }
     }
