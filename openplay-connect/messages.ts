@@ -1,4 +1,4 @@
-import { SuiTransactionBlockResponse } from "@mysten/sui/dist/cjs/client";
+import { SuiTransactionBlockResponse } from "@mysten/sui/client";
 
 export const TX_SIGN_AND_EXECUTE_REQUEST = "TX_SIGN_AND_EXECUTE_REQUEST";
 export const TX_SIGN_AND_EXECUTE_RESPONSE = "TX_SIGN_AND_EXECUTE_RESPONSE";
@@ -41,7 +41,7 @@ export type Message =
         errorMsg?: string;
     };
 
-export function isMessage(value: any): value is Message {
+export function isMessage(value: Message) {
     if (typeof value !== "object" || value === null) return false;
     return (
         value.type === TX_SIGN_AND_EXECUTE_REQUEST ||
