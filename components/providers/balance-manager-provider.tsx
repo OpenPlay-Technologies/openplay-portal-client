@@ -48,7 +48,7 @@ export const BalanceManagerProvider: React.FC<{ children: React.ReactNode }> = (
     }, [balanceManagerCaps, selectedBalanceManagerId]);
 
     useEffect(() => {
-        console.log("Selected balance manager id:", selectedBalanceManagerId);
+        // console.log("Selected balance manager id:", selectedBalanceManagerId);
     }, [selectedBalanceManagerId]);
 
     const fetchBalanceManagerCaps = useCallback(async () => {
@@ -56,7 +56,7 @@ export const BalanceManagerProvider: React.FC<{ children: React.ReactNode }> = (
             return;
         }
         try {
-            console.log("Fetching balance manager caps");
+            // console.log("Fetching balance manager caps");
             const fetchedBalanceManagerCaps = await fetchAllBalanceManagerCaps(account.address);
             setBalanceManagerCaps(fetchedBalanceManagerCaps);
         } catch (error) {
@@ -69,7 +69,7 @@ export const BalanceManagerProvider: React.FC<{ children: React.ReactNode }> = (
             return;
         }
         try {
-            console.log("Fetching balance managers");
+            // console.log("Fetching balance managers");
             const fetchedBalanceManagers = await fetchBalanceManagersByIds(balanceManagerCaps.map((cap) => cap.balance_manager_id));
             const sortedBalanceManagers = fetchedBalanceManagers.sort((a, b) => b.balance - a.balance); // Sorting in descending order
             setBalanceManagerData(sortedBalanceManagers);
@@ -80,7 +80,7 @@ export const BalanceManagerProvider: React.FC<{ children: React.ReactNode }> = (
 
     useEffect(() => {
         if (!selectedBalanceManagerId && balanceManagerData.length > 0) {
-            console.log("Pre-selecting balance manager id:", balanceManagerData[0].id.id);
+            // console.log("Pre-selecting balance manager id:", balanceManagerData[0].id.id);
             setSelectedBalanceManagerId(balanceManagerData[0].id.id);
         }
     }, [selectedBalanceManagerId, balanceManagerData]);

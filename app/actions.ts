@@ -2,7 +2,7 @@
 
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { Transaction } from "@mysten/sui/transactions";
-import { getGasStationClient, getSuiClient } from "@/api/sui-client";
+import { getGasStationClient, getShinamiWalletSigner, getSuiClient } from "@/api/sui-client";
 import { toBase64 } from "@mysten/bcs";
 import { INTERACT_FUNCTION_TARGET } from "@/api/coinflip-constants";
 import {
@@ -196,6 +196,60 @@ export async function executeSponsoredTransact(bytes: string, senderSignature: s
             showEvents: true
         },
     })
+}
+
+export async function signAndExecuteInvisWalletJsonTransaction(txJson: string, walletId: string) {
+    // Start the timer
+    const startTime = Date.now();
+    const logStep = (message: string) => {
+        console.log(`[${Date.now() - startTime}ms] ${message}`);
+    };
+
+    try {
+        logStep("Step 1: Parsing transaction JSON.");
+        const tx = Transaction.from(txJson);
+
+        logStep("Step 2: Verifying transaction data.");
+        if (!verifyTxData(tx)) {
+            throw new Error("Invalid transaction data");
+        }
+    
+        logStep("Step 3: Retrieving wallet signer.");
+        const signer = getShinamiWalletSigner(walletId);
+    
+        logStep("Step 4: Building gasless transaction.");
+        const gaslessTx = await buildGaslessTransaction(tx, { sui: getSuiClient() });
+
+        logStep("Step 5: Executing gasless transaction.");
+        const result = await signer.executeGaslessTransaction(gaslessTx, {
+            showEvents: true,
+            showEffects: true,
+        });
+        logStep("Transaction executed successfully.");
+        return result;
+    }
+    catch (error) {
+        logStep("Error signing and executing transaction.");
+        console.error(error);
+        throw new Error("Error signing and executing transaction: " + error);
+    }
+}
+
+export async function TryCreateInvisWallet(walletId: string) {
+    const signer = getShinamiWalletSigner(walletId);
+    await signer.tryCreate();
+}
+
+
+
+export async function getInvisWalletAddress(walletId: string) {
+
+    const signer = getShinamiWalletSigner(walletId);
+
+    // Safe to do if unsure about the wallet's existence.
+    await signer.tryCreate();
+
+    return await signer.getAddress();
 }
 
 

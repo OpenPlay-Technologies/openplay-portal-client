@@ -1,10 +1,8 @@
-import { Transaction } from "@mysten/sui/transactions";
 import { INIT_RESPONSE, isMessage, Message, TX_SIGN_AND_EXECUTE_REQUEST, TX_SIGN_AND_EXECUTE_RESPONSE } from "./messages";
-import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
-import { buildSponsoredTransactionFromJson, executeSponsoredTransact } from "@/app/actions";
+import { signAndExecuteInvisWalletJsonTransaction } from "@/app/actions";
 
 // Define the message event listener
-export function handleMessage(event: MessageEvent, keypair: Ed25519Keypair) {
+export function handleMessage(event: MessageEvent, walletId: string) {
     console.log("Received message from origin:", event.origin);
     console.log("Received message:", event.data);
 
@@ -14,7 +12,7 @@ export function handleMessage(event: MessageEvent, keypair: Ed25519Keypair) {
 
     switch (data.type) {
         case TX_SIGN_AND_EXECUTE_REQUEST:
-            handleSignRequest(sourceWindow, data, keypair);
+            handleSignRequest(sourceWindow, data, walletId);
             break;
         case TX_SIGN_AND_EXECUTE_RESPONSE:
             // Handle TX_SIGN_AND_EXECUTE_RESPONSE if needed
@@ -33,34 +31,36 @@ export function handleMessage(event: MessageEvent, keypair: Ed25519Keypair) {
 }
 
 // Handler for TX_SIGN_AND_EXECUTE_REQUEST messages
-async function handleSignRequest(targetWindow: Window, data: Message, keypair: Ed25519Keypair) {
+async function handleSignRequest(targetWindow: Window, data: Message, walletId: string) {
     if (data.type !== TX_SIGN_AND_EXECUTE_REQUEST) return;
 
 
     try {
 
-        const sender = keypair.toSuiAddress();
+        // const sender = keypair.toSuiAddress();
 
-        const sponsorResponse = await buildSponsoredTransactionFromJson(sender, data.txJson);
+        // const sponsorResponse = await buildSponsoredTransactionFromJson(sender, data.txJson);
 
-        if (!sponsorResponse) {
-            const postMessage: Message = {
-                type: TX_SIGN_AND_EXECUTE_RESPONSE,
-                requestId: data.request_id,
-                isSuccessful: false,
-                errorMsg: "Invalid transaction data",
-            };
-            targetWindow.postMessage(postMessage, "*");
-            return;
-        }
+        // if (!sponsorResponse) {
+        //     const postMessage: Message = {
+        //         type: TX_SIGN_AND_EXECUTE_RESPONSE,
+        //         requestId: data.request_id,
+        //         isSuccessful: false,
+        //         errorMsg: "Invalid transaction data",
+        //     };
+        //     targetWindow.postMessage(postMessage, "*");
+        //     return;
+        // }
 
-        const tx = Transaction.from(sponsorResponse.bytes);
-        const senderSignature = await tx.sign({
-            signer: keypair,
-        });
+        // const tx = Transaction.from(sponsorResponse.bytes);
+        // const senderSignature = await tx.sign({
+        //     signer: keypair,
+        // });
         
-        // TODO: make sure the Tx has not been tampered with
-        const result = await executeSponsoredTransact(sponsorResponse.bytes, senderSignature.signature, sponsorResponse.signature);
+        // // TODO: make sure the Tx has not been tampered with
+        // const result = await executeSponsoredTransact(sponsorResponse.bytes, senderSignature.signature, sponsorResponse.signature);
+
+        const result = await signAndExecuteInvisWalletJsonTransaction(data.txJson, walletId);
 
         console.log("Transaction Result:", result);
 
