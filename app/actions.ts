@@ -1,10 +1,10 @@
 ﻿"use server"
 
-import {Ed25519Keypair} from "@mysten/sui/keypairs/ed25519";
-import {Transaction} from "@mysten/sui/transactions";
-import {getGasStationClient, getSuiClient} from "@/api/sui-client";
-import {toBase64} from "@mysten/bcs";
-import {INTERACT_FUNCTION_TARGET} from "@/api/coinflip-constants";
+import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
+import { Transaction } from "@mysten/sui/transactions";
+import { getGasStationClient, getSuiClient } from "@/api/sui-client";
+import { toBase64 } from "@mysten/bcs";
+import { INTERACT_FUNCTION_TARGET } from "@/api/coinflip-constants";
 import {
     DEPOSIT_BALANCE_MANAGER_FUNCTION_TARGET,
     MINT_PLAY_CAP_FUNCTION_TARGET,
@@ -12,7 +12,7 @@ import {
     SHARE_BALANCE_MANAGER_FUNCTION_TARGET,
     WITHDRAW_BALANCE_MANAGER_FUNCTION_TARGET
 } from "@/api/core-constants";
-import {buildGaslessTransaction} from "@shinami/clients/sui";
+import { buildGaslessTransaction } from "@shinami/clients/sui";
 
 export async function getSponsorAddress() {
     const network = process.env.NEXT_PUBLIC_NETWORK as 'mainnet' | 'testnet' | 'devnet' | 'localnet';
@@ -25,44 +25,6 @@ export async function getSponsorAddress() {
     const keypair = Ed25519Keypair.fromSecretKey(process.env.LOCAL_GAS_STATION_PRIVATE_KEY);
     return keypair.toSuiAddress();
 }
-
-// export async function buildSponsoredCoinFlipTransaction(sender: string, balanceManagerId: string, houseId: string, playCapId: string, gameId: string, stake: number, prediction: string) {
-//     if (!process.env.LOCAL_GAS_STATION_PRIVATE_KEY) {
-//         throw ("No private key found");
-//     }
-//     const keypair = Ed25519Keypair.fromSecretKey(process.env.LOCAL_GAS_STATION_PRIVATE_KEY);
-//     const registryId = process.env.NEXT_PUBLIC_REGISTRY_ID;
-//
-//     if (!registryId) {
-//         throw ("Registry ID not found")
-//     }
-//
-//
-//
-//     const tx = new Transaction();
-//
-//     tx.moveCall({
-//         target: INTERACT_FUNCTION_TARGET,
-//         arguments: [
-//             tx.object(gameId),
-//             tx.object(registryId),
-//             tx.object(balanceManagerId),
-//             tx.object(houseId),
-//             tx.object(playCapId),
-//             tx.pure.string("PlaceBet"),
-//             tx.pure.u64(stake),
-//             tx.pure.string(prediction),
-//             tx.object('0x8'), // random
-//         ],
-//     });
-//
-//     tx.setGasOwner(keypair.toSuiAddress());
-//     tx.setSender(sender);
-//     return await tx.sign({
-//         signer: keypair,
-//         client: getSuiClient()
-//     });
-// }
 
 export async function buildSponsoredCoinFlipTransaction(sender: string, balanceManagerId: string, houseId: string, playCapId: string, gameId: string, stake: number, prediction: string) {
     const registryId = process.env.NEXT_PUBLIC_REGISTRY_ID;
@@ -127,7 +89,101 @@ export async function buildSponsoredCoinFlipTransaction(sender: string, balanceM
             throw new Error("Error sponsoring transaction: " + e.data.details);
         }
     }
+}
 
+export async function buildSponsoredTransactionFromJson(sender: string, txJson: string) {
+
+    const tx = Transaction.from(txJson);
+    tx.setSender(sender);
+
+    if (!verifyTxData(tx)) {
+        throw new Error("Invalid transaction data");
+    }
+
+    const network = process.env.NEXT_PUBLIC_NETWORK as 'mainnet' | 'testnet' | 'devnet' | 'localnet';
+    // Custom implementation for localnet
+    if (network == "localnet") {
+        if (!process.env.LOCAL_GAS_STATION_PRIVATE_KEY) {
+            throw ("No private key found");
+        }
+
+        const keypair = Ed25519Keypair.fromSecretKey(process.env.LOCAL_GAS_STATION_PRIVATE_KEY);
+        tx.setGasOwner(keypair.toSuiAddress());
+        const sponsoredSignature = await tx.sign({
+            signer: keypair,
+            client: getSuiClient()
+        });
+        return {
+            bytes: sponsoredSignature.bytes,
+            signature: sponsoredSignature.signature
+        }
+    }
+    // Shinami
+    else {
+        const gasClient = getGasStationClient();
+        const gaslessTx = await buildGaslessTransaction(
+            tx,
+            {
+                sender: sender,
+                sui: getSuiClient(),
+            });
+        try {
+            const sponsoredResponse = await gasClient.sponsorTransaction(gaslessTx);
+            return {
+                bytes: sponsoredResponse.txBytes,
+                signature: sponsoredResponse.signature
+            }
+        } catch (e) {
+            // @ts-expect-error fff
+            throw new Error("Error sponsoring transaction: " + e.data.details);
+        }
+    }
+}
+
+// Validate the transaction
+function verifyTxData(transaction: Transaction): boolean {
+    const txData = transaction.getData();
+    const txInputs = txData.inputs;
+
+    // 1. Verify transaction commands
+    if (txData.commands.length !== 1) {
+        console.error("Transaction must have exactly one command");
+        return false;
+    }
+
+    const moveCallCommand = txData.commands[0].MoveCall;
+    if (!moveCallCommand) {
+        console.error("Transaction must have a MoveCall command");
+        return false;
+    }
+
+    // 2. Verify move call target
+    // const moveCallTarget =
+    //     moveCallCommand.package +
+    //     "::" +
+    //     moveCallCommand.module +
+    //     "::" +
+    //     moveCallCommand.function;
+    // if (moveCallTarget !== INTERACT_FUNCTION_TARGET) {
+    //     console.error("Invalid MoveCall target: ", moveCallTarget);
+    //     return false;
+    // }
+
+    // 3. Verify move call inputs
+    const moveCallArgs = moveCallCommand.arguments;
+    const gameIdArg = moveCallArgs[0];
+    if (
+        !(
+            gameIdArg.$kind === "Input" &&
+            txInputs[gameIdArg.Input].UnresolvedObject?.objectId ===
+            "0x3a3dc449dd74875134f1f5306b468afed94206cde4e91937bd284e0dab9f0e3a"
+        )
+    ) {
+        console.error("Invalid Game Id");
+        return false;
+    }
+
+    return true;
 }
 
 

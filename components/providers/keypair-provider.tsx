@@ -48,13 +48,14 @@ export const KeypairProvider: React.FC<KeypairProviderProps> = ({ children }) =>
 
     // Check if we can resume the game, or whether we need to mint a new play cap
     useEffect(() => {
-      // console.log("currentBalanceManager", currentBalanceManager);
+      console.log("currentBalanceManager", currentBalanceManager);
+      console.log("playcaps:", playCaps);
         if (account && currentBalanceManager && playCaps.length > 0) {
             const allowedPlayCap = playCaps.find((ownedCap) =>
                 currentBalanceManager?.tx_allow_listed?.fields?.contents?.find((allowedCap) => ownedCap.id.id == allowedCap)
             );
 
-          // console.log(allowedPlayCap);
+            console.log("allowedCap", allowedPlayCap);
             setActivePlayCap(allowedPlayCap ?? null);
         }
         else {

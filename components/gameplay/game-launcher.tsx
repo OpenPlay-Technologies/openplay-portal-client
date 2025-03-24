@@ -1,33 +1,35 @@
 ﻿"use client"
 import CoinFlipGame from "@/components/gameplay/coin-flip-game";
-import {useKeypair} from "@/components/providers/keypair-provider";
-import {useBalanceManager} from "@/components/providers/balance-manager-provider";
-import {useCurrentAccount, useSignTransaction} from "@mysten/dapp-kit";
-import {GameModel} from "@/api/models/openplay-coin-flip";
-import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
-import {Button} from "@/components/ui/button";
-import {Transaction} from "@mysten/sui/transactions";
-import {useState} from "react";
+import { useKeypair } from "@/components/providers/keypair-provider";
+import { useBalanceManager } from "@/components/providers/balance-manager-provider";
+import { useCurrentAccount, useSignTransaction } from "@mysten/dapp-kit";
+import { GameModel } from "@/api/models/openplay-coin-flip";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Transaction } from "@mysten/sui/transactions";
+import { useState } from "react";
 import BalanceManagerCard from "@/components/gameplay/balance-manager-card";
-import {useRouter} from "next/navigation";
+import { useRouter } from "next/navigation";
 import Wallet from "@/components/sui/wallet";
-import {buildMintPlayCapTransaction} from "@/app/coin-flip/actions";
-import {executeAndWaitForTransactionBlock} from "@/app/actions";
+import { buildMintPlayCapTransaction } from "@/app/coin-flip/actions";
+import { executeAndWaitForTransactionBlock } from "@/app/actions";
+import OpenPlayConnectGame from "./openplay-connect-game";
 
 interface GameLauncherProps {
     data: GameModel;
     house_id: string;
     stakes: number[];
+    openplayGame?: boolean;
     className?: string;
 }
 
 export default function GameLauncher(props: GameLauncherProps) {
-    const {back} = useRouter();
+    const { back } = useRouter();
     const account = useCurrentAccount();
-    const {keypair, activePlayCap: kpActivePlayCap, updatePlayCaps} = useKeypair();
+    const { keypair, activePlayCap: kpActivePlayCap, updatePlayCaps } = useKeypair();
     const [loadingRefresh, setLoadingRefresh] = useState(false);
-    
-    const {mutate: signTransaction} = useSignTransaction();
+
+    const { mutate: signTransaction } = useSignTransaction();
 
     const {
         currentBalanceManager,
@@ -51,15 +53,15 @@ export default function GameLauncher(props: GameLauncherProps) {
             console.error('Balance manager cap not found');
             return;
         }
-        
+
         const bytes = await buildMintPlayCapTransaction(account.address, currentBalanceManager.id.id, currentBalanceManagerCap.id.id, keypair.toSuiAddress());
         const tx = Transaction.from(bytes);
-        
+
         setLoadingRefresh(true);
 
         signTransaction({
-                transaction: tx
-            },
+            transaction: tx
+        },
             {
                 onSuccess: (result) => {
                     // console.log('Transaction executed', result);
@@ -80,7 +82,7 @@ export default function GameLauncher(props: GameLauncherProps) {
 
     return (
         <div className={"flex flex-grow justify-center items-center h-full w-full bg-muted rounded-l-md"}>
-            
+
             {!account && <Card>
                 <CardHeader>
                     <CardTitle>
@@ -95,10 +97,10 @@ export default function GameLauncher(props: GameLauncherProps) {
                 </CardContent>
             </Card>}
             {account && !currentBalanceManager && <BalanceManagerCard />}
-            {kpActivePlayCap && account && <CoinFlipGame stakes={props.stakes} house_id={props.house_id} game={props.data} onClose={() => {
+            {kpActivePlayCap && account && !props.openplayGame && <CoinFlipGame stakes={props.stakes} house_id={props.house_id} game={props.data} onClose={() => {
                 back();
-            }}/>
-            }
+            }} />}
+            {kpActivePlayCap && account && props.openplayGame && <OpenPlayConnectGame />}
             {/*{!gameLaunched && <StartGame*/}
             {/*    gameData={props.data}*/}
             {/*    onLaunch={handleLaunch}*/}

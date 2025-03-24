@@ -116,6 +116,9 @@ importers:
       react-hook-form:
         specifier: ^7.54.2
         version: 7.54.2(react@19.0.0)
+      react-iframe:
+        specifier: ^1.8.5
+        version: 1.8.5(react@19.0.0)
       sonner:
         specifier: ^1.7.1
         version: 1.7.1(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
@@ -2288,6 +2291,11 @@ packages:
     engines: {node: '>=18.0.0'}
     peerDependencies:
       react: ^16.8.0 || ^17 || ^18 || ^19
+
+  react-iframe@1.8.5:
+    resolution: {integrity: sha512-F4cQJGs3ydaG6fJWfuz9yLwOU0Trzl6kttXuUG+vYwosH8enOOFxZWEDQCSbNVO8ayjfYZeqLxEvdvcsSy4GvA==}
+    peerDependencies:
+      react: '>=16.x.x'
 
   react-is@16.13.1:
     resolution: {integrity: sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==}
@@ -5022,6 +5030,11 @@ snapshots:
 
   react-hook-form@7.54.2(react@19.0.0):
     dependencies:
+      react: 19.0.0
+
+  react-iframe@1.8.5(react@19.0.0):
+    dependencies:
+      object-assign: 4.1.1
       react: 19.0.0
 
   react-is@16.13.1: {}
