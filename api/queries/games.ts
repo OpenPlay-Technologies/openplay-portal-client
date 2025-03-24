@@ -23,15 +23,14 @@ import {GameModel} from "@/api/models/openplay-coin-flip";
 
 export const fetchGame = async (gameId: string): Promise<GameModel | undefined> => {
     const client = getSuiClient();
-    let response = await client.getObject({
+    const response = await client.getObject({
         id: gameId,
         options: {
             showContent: true
         }
     });
     if (response.data?.content?.dataType === "moveObject") {
-        // @ts-ignore
-        return response.data.content.fields as GameModel;
+        return response.data.content.fields as unknown as GameModel;
     }
     return undefined;
 }
