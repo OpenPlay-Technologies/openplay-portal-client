@@ -37,29 +37,6 @@ async function handleSignRequest(targetWindow: Window, data: Message, walletId: 
 
     try {
 
-        // const sender = keypair.toSuiAddress();
-
-        // const sponsorResponse = await buildSponsoredTransactionFromJson(sender, data.txJson);
-
-        // if (!sponsorResponse) {
-        //     const postMessage: Message = {
-        //         type: TX_SIGN_AND_EXECUTE_RESPONSE,
-        //         requestId: data.request_id,
-        //         isSuccessful: false,
-        //         errorMsg: "Invalid transaction data",
-        //     };
-        //     targetWindow.postMessage(postMessage, "*");
-        //     return;
-        // }
-
-        // const tx = Transaction.from(sponsorResponse.bytes);
-        // const senderSignature = await tx.sign({
-        //     signer: keypair,
-        // });
-        
-        // // TODO: make sure the Tx has not been tampered with
-        // const result = await executeSponsoredTransact(sponsorResponse.bytes, senderSignature.signature, sponsorResponse.signature);
-
         const result = await signAndExecuteInvisWalletJsonTransaction(data.txJson, walletId);
 
         console.log("Transaction Result:", result);

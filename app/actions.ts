@@ -2,7 +2,7 @@
 
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { Transaction } from "@mysten/sui/transactions";
-import { getGasStationClient, getShinamiWalletSigner, getSuiClient } from "@/api/sui-client";
+import { getPriviligedSuiClient, getShinamiWalletSigner, getSuiClient } from "@/api/sui-client";
 import { toBase64 } from "@mysten/bcs";
 import {
     DEPOSIT_BALANCE_MANAGER_FUNCTION_TARGET,
@@ -25,54 +25,6 @@ export async function getSponsorAddress() {
     return keypair.toSuiAddress();
 }
 
-export async function buildSponsoredTransactionFromJson(sender: string, txJson: string) {
-
-    const tx = Transaction.from(txJson);
-    tx.setSender(sender);
-
-    if (!verifyTxData(tx)) {
-        throw new Error("Invalid transaction data");
-    }
-
-    const network = process.env.NEXT_PUBLIC_NETWORK as 'mainnet' | 'testnet' | 'devnet' | 'localnet';
-    // Custom implementation for localnet
-    if (network == "localnet") {
-        if (!process.env.LOCAL_GAS_STATION_PRIVATE_KEY) {
-            throw ("No private key found");
-        }
-
-        const keypair = Ed25519Keypair.fromSecretKey(process.env.LOCAL_GAS_STATION_PRIVATE_KEY);
-        tx.setGasOwner(keypair.toSuiAddress());
-        const sponsoredSignature = await tx.sign({
-            signer: keypair,
-            client: getSuiClient()
-        });
-        return {
-            bytes: sponsoredSignature.bytes,
-            signature: sponsoredSignature.signature
-        }
-    }
-    // Shinami
-    else {
-        const gasClient = getGasStationClient();
-        const gaslessTx = await buildGaslessTransaction(
-            tx,
-            {
-                sender: sender,
-                sui: getSuiClient(),
-            });
-        try {
-            const sponsoredResponse = await gasClient.sponsorTransaction(gaslessTx);
-            return {
-                bytes: sponsoredResponse.txBytes,
-                signature: sponsoredResponse.signature
-            }
-        } catch (e) {
-            // @ts-expect-error fff
-            throw new Error("Error sponsoring transaction: " + e.data.details);
-        }
-    }
-}
 
 // Validate the transaction
 // eslint-disable-next-line unused-imports/no-unused-vars
@@ -142,7 +94,7 @@ export async function signAndExecuteInvisWalletJsonTransaction(txJson: string, w
         const signer = getShinamiWalletSigner(walletId);
     
         logStep("Step 4: Building gasless transaction.");
-        const gaslessTx = await buildGaslessTransaction(tx, { sui: getSuiClient() });
+        const gaslessTx = await buildGaslessTransaction(tx, { sui: getPriviligedSuiClient() });
 
         logStep("Step 5: Executing gasless transaction.");
         const result = await signer.executeGaslessTransaction(gaslessTx, {
