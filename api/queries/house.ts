@@ -4,32 +4,18 @@ import {getSuiClient} from "@/api/sui-client";
 import {HouseModel} from "@/api/models/openplay-core";
 
 
-// export const fetchHouse = async (houseId: string): Promise<HouseModel | undefined> => {
-//     const graphqlClient = getGraphQLClient();
-//     const result = await graphqlClient.query({
-//         query: GET_MOVE_OBJECT_CONTENTS,
-//         variables: {
-//             address: houseId,
-//         },
-//     });
-//
-//     const rawData = result?.data?.object?.asMoveObject?.contents?.json;
-//     return rawData as HouseModel;
-// }
-
 export const fetchHouse = async (houseId: string): Promise<HouseModel | undefined> => {
     const client = getSuiClient();
 
     try {
-        let response = await client.getObject({
+        const response = await client.getObject({
             id: houseId,
             options: {
                 showContent: true
             }
         });
         if (response.data?.content?.dataType === "moveObject") {
-            // @ts-ignore
-            return response.data.content.fields as HouseModel;
+            return response.data.content.fields as unknown as HouseModel;
         }
     }
     catch (error) {
@@ -47,18 +33,6 @@ export const fetchAllHouses = async (): Promise<HouseModel[]> => {
     return data.filter((house) => house !== undefined) as HouseModel[];
 };
 
-// export const fetchHousesByIds = async (gameIds: string[]): Promise<Record<string, HouseModel>> => {
-//
-//     const results = await Promise.allSettled(gameIds.map(fetchHouse));
-//
-//     return results.reduce((acc, result, index) => {
-//         if (result.status === 'fulfilled' && result.value !== undefined) {
-//             acc[gameIds[index]] = result.value;
-//         }
-//         return acc;
-//     }, {} as Record<string, HouseModel>);
-// }
-
 export const fetchHousesByIds = async (houseIds: string[]): Promise<HouseModel[]> => {
     const client = getSuiClient();
     const response = await client.multiGetObjects({
@@ -70,8 +44,7 @@ export const fetchHousesByIds = async (houseIds: string[]): Promise<HouseModel[]
 
     const houses = response.map(x => {
         if (x.data?.content?.dataType === "moveObject") {
-            // @ts-ignore
-            return x.data.content.fields as HouseModel;
+            return x.data.content.fields as unknown as HouseModel;
         }
         return undefined;
     })

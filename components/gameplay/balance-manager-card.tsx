@@ -12,7 +12,6 @@ import {zodResolver} from "@hookform/resolvers/zod";
 import {useForm} from "react-hook-form";
 import {Form, FormControl, FormField, FormItem, FormMessage} from "@/components/ui/form";
 import {cn, formatSuiAmount} from "@/lib/utils";
-import {useKeypair} from "@/components/providers/keypair-provider";
 import {Card} from "@/components/ui/card";
 import ClientCopyIcon from "@/components/ui/client-copy-icon";
 import {
@@ -23,6 +22,7 @@ import {
 } from "@/app/actions";
 import {Transaction} from "@mysten/sui/transactions";
 import {BALANCE_MANAGER_TYPE} from "@/api/core-constants";
+import { useInvisibleWallet } from '../providers/invisible-wallet-provider'
 
 const transactSchema = z.object({
     amount: z
@@ -46,9 +46,9 @@ export default function BalanceManagerCard() {
         currentBalanceManagerCap,
     } = useBalanceManager();
     const {
-        updatePlayCaps: updateKpPlayCaps,
-        keypair
-    } = useKeypair();
+        updatePlayCaps: updateInvisWalletPlayCaps,
+        walletAddress: invisWalletAddress
+    } = useInvisibleWallet();
     const {mutate: disconnect} = useDisconnectWallet();
     
     const {mutate: signTransaction} = useSignTransaction();
@@ -73,7 +73,7 @@ export default function BalanceManagerCard() {
             return;
         }
 
-        if (!account || !keypair) {
+        if (!account || !invisWalletAddress) {
             console.error('Account not found');
             return;
         }
@@ -82,9 +82,9 @@ export default function BalanceManagerCard() {
 
         if (action == "Deposit") {
             if (!newState && currentBalanceManager && currentBalanceManagerCap) {
-                bytes = await buildDepositToExistingBalanceManagerTransaction(account.address, currentBalanceManager.id.id, currentBalanceManagerCap.id.id, values.amount, keypair.toSuiAddress());
+                bytes = await buildDepositToExistingBalanceManagerTransaction(account.address, currentBalanceManager.id.id, currentBalanceManagerCap.id.id, values.amount, invisWalletAddress);
             } else {
-                bytes = await buildDepositToNewBalanceManagerTransaction(account.address, values.amount, keypair.toSuiAddress());
+                bytes = await buildDepositToNewBalanceManagerTransaction(account.address, values.amount, invisWalletAddress);
             }
         }
         if (action == "Withdraw") {
@@ -113,7 +113,7 @@ export default function BalanceManagerCard() {
                         refreshBalanceManagers();
                         refreshBalanceManagerCaps();
                         refreshPlayCaps();
-                        updateKpPlayCaps();
+                        updateInvisWalletPlayCaps();
                         setLoading(false);
                         console.log(resp.objectChanges);
                         const createdBm = resp.objectChanges?.find(

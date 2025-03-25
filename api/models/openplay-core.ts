@@ -1,4 +1,4 @@
-﻿import {Balance, MoveObject, Table, Uid, VecMap, VecSet} from "@/api/models/shared-models";
+﻿import {MoveObject, Table, Uid, VecMap, VecSet} from "@/api/models/shared-models";
 
 export const errorMessages: Record<string, Record<number, string>> = {
     balance_manager: {
@@ -63,15 +63,6 @@ export interface RegistryModel {
     protocol_fee_bps: bigint;
 }
 
-// export interface VaultModel {
-//     epoch: number;
-//     collected_house_fees: Balance;
-//     collected_protocol_fees: Balance
-//     collected_referral_fees: VecMap<string, Balance>, // TODO: verify this mapping is ok
-//     play_balance: Balance;
-//     reserve_balance: Balance;
-// }
-
 export interface VaultModel {
     epoch: number;
     collected_house_fees: number;
@@ -111,18 +102,6 @@ export interface StateModel {
     eod_history: MoveObject<Table>,
 }
 
-// export interface HouseModel {
-//     id: string;
-//     admin_cap_id: string;
-//     private: boolean;
-//     target_balance: bigint;
-//     house_fee_bps: bigint;
-//     referral_fee_bps: bigint;
-//     tx_allow_listed: VecSet<string>;
-//     vault: VaultModel;
-//     state: StateModel;
-// }
-
 export interface HouseModel {
     id: Uid;
     admin_cap_id: string;
@@ -140,25 +119,12 @@ export interface HouseAdminCapModel {
     house_id: string;
 }
 
-// export interface HouseTransactionCapModel {
-//     id: string;
-//     house_id: string;
-//     game_id: string;
-// }
-
 export interface AccountModel {
     lifetime_total_bets: bigint;
     lifetime_total_wins: bigint;
     debit_balance: bigint;
     credit_balance: bigint;
 }
-
-// export interface BalanceManagerModel {
-//     id: string;
-//     balance: Balance;
-//     tx_allow_listed: VecSet<string>;
-//     cap_id: string;
-// }
 
 export interface BalanceManagerModel {
     id: Uid;

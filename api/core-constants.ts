@@ -1,4 +1,4 @@
-﻿const initialPackageId = process.env.NEXT_PUBLIC_INITIAL_CORE_PACKAGE_ID;
+﻿// const initialPackageId = process.env.NEXT_PUBLIC_INITIAL_CORE_PACKAGE_ID;
 const currentPackageId = process.env.NEXT_PUBLIC_CURRENT_CORE_PACKAGE_ID;
 
 // === Types ====

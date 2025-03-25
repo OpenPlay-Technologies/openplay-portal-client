@@ -1,10 +1,5 @@
 "use client"
 import {createContext, ReactNode, useCallback, useContext, useEffect, useState} from "react";
-// import {getOrCreateKeypair} from "@/lib/keypair";
-// import {fetchAllPlayCaps} from "@/api/queries/balance-manager";
-// import {PlayCapModel} from "@/api/models/openplay-core";
-// import {useBalanceManager} from "@/components/providers/balance-manager-provider";
-// import {useCurrentAccount} from "@mysten/dapp-kit";
 import { getOrCreateWalletId } from "@/lib/local-wallet-id";
 import { getInvisWalletAddress, TryCreateInvisWallet } from "@/app/actions";
 import { PlayCapModel } from "@/api/models/openplay-core";

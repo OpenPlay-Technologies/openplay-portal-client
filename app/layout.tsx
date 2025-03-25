@@ -8,7 +8,6 @@ import { BalanceProvider } from "@/components/providers/balance-provider";
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import Footer from "@/components/nav/footer";
-import { KeypairProvider } from "@/components/providers/keypair-provider";
 import { BalanceManagerProvider } from "@/components/providers/balance-manager-provider";
 import { Analytics } from "@vercel/analytics/react"
 import { InvisibleWalletProvider } from '@/components/providers/invisible-wallet-provider';
@@ -38,7 +37,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                     <SuiClientProviders>
                         <BalanceProvider>
                             <BalanceManagerProvider>
-                                <KeypairProvider>
                                     <InvisibleWalletProvider>
                                         <div className={'flex flex-col min-h-screen'}>
                                             <Header />
@@ -48,7 +46,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                                             <Footer />
                                         </div>
                                     </InvisibleWalletProvider>
-                                </KeypairProvider>
                             </BalanceManagerProvider>
                         </BalanceProvider>
                     </SuiClientProviders>

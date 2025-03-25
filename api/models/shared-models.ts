@@ -1,6 +1,4 @@
-﻿import {TransactionEffects} from "@mysten/sui/client";
-
-export interface Balance {
+﻿export interface Balance {
     value: number
 }
 

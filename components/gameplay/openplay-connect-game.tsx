@@ -5,7 +5,12 @@ import { handleMessage } from "@/openplay-connect/listener";
 import { useBalanceManager } from "../providers/balance-manager-provider";
 import { useInvisibleWallet } from "../providers/invisible-wallet-provider";
 
-export default function OpenPlayConnectGame() {
+interface OpenPlayConnectGameProps {
+    houseId: string;
+    gameUrl: string;
+}
+
+export default function OpenPlayConnectGame(props: OpenPlayConnectGameProps) {
     const iframeRef = useRef<HTMLIFrameElement>(null);
     // const { keypair, activePlayCap } = useKeypair();
     const { walletId, activePlayCap } = useInvisibleWallet();
@@ -37,7 +42,7 @@ export default function OpenPlayConnectGame() {
                 const initData = {
                     type: INIT_REQUEST,
                     balanceManagerId: selectedBalanceManagerId,
-                    houseId: "0x841cdc09b4ac2b6c991e053f21b2e1a3cb7623ea07b23ccf621b04984b3852d3",
+                    houseId: props.houseId,
                     playCapId: activePlayCap?.id.id,
                 };
 
@@ -49,16 +54,16 @@ export default function OpenPlayConnectGame() {
         return () => {
             window.removeEventListener("message", messageHandler);
         };
-    }, [walletId, activePlayCap, selectedBalanceManagerId, messageHandler]);
+    }, [walletId, activePlayCap, selectedBalanceManagerId, messageHandler, props.houseId]);
 
 
 
     return (
         <iframe
-          id="gameIframe"
-          ref={iframeRef}
-          src="https://piggy-bank-client.vercel.app/"
-          className="w-full h-full"
+            id="gameIframe"
+            ref={iframeRef}
+            src={props.gameUrl}
+            className="w-full h-full"
         />
     );
 }
