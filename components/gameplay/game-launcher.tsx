@@ -77,46 +77,44 @@ export default function GameLauncher(props: GameLauncherProps) {
 
     return (
         <>
-            {invisActivePlayCap && account && <OpenPlayConnectGame gameUrl={props.gameUrl} houseId={props.houseId} />}
-            {!invisActivePlayCap || !account &&
-                (
-                    <div className={"flex flex-grow justify-center items-center h-full w-full bg-muted rounded-l-md"}>
+            {invisActivePlayCap && account && currentBalanceManager ? <OpenPlayConnectGame gameUrl={props.gameUrl} houseId={props.houseId} /> : (
+                <div className={"flex flex-grow justify-center items-center h-full w-full bg-muted rounded-l-md"}>
 
-                        {!account && <Card>
+                    {!account && <Card>
+                        <CardHeader>
+                            <CardTitle>
+                                Connect your wallet to continue
+                            </CardTitle>
+                            <CardDescription>
+                                Please connect your wallet and set up a balance manager to start playing.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <Wallet></Wallet>
+                        </CardContent>
+                    </Card>}
+                    {account && !currentBalanceManager && <BalanceManagerCard />}
+
+                    {!invisActivePlayCap && account && currentBalanceManager &&
+
+                        <Card>
                             <CardHeader>
                                 <CardTitle>
-                                    Connect your wallet to continue
+                                    No valid gaming session found
                                 </CardTitle>
                                 <CardDescription>
-                                    Please connect your wallet and set up a balance manager to start playing.
+                                    Please refresh your gaming session to continue.
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
-                                <Wallet></Wallet>
+                                <Button className={"w-fit h-fit"} onClick={handleRefresh} disabled={loadingRefresh}>
+                                    Refresh Session
+                                </Button>
                             </CardContent>
-                        </Card>}
-                        {account && !currentBalanceManager && <BalanceManagerCard />}
-
-                        {!invisActivePlayCap && account && currentBalanceManager &&
-
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>
-                                        No valid gaming session found
-                                    </CardTitle>
-                                    <CardDescription>
-                                        Please refresh your gaming session to continue.
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                    <Button className={"w-fit h-fit"} onClick={handleRefresh} disabled={loadingRefresh}>
-                                        Refresh Session
-                                    </Button>
-                                </CardContent>
-                            </Card>
-                        }
-                    </div>
-                )}
+                        </Card>
+                    }
+                </div>
+            )}
         </>
     );
 }

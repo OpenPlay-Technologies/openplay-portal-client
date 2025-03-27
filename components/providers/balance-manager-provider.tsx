@@ -65,7 +65,7 @@ export const BalanceManagerProvider: React.FC<{ children: React.ReactNode }> = (
     }, [account?.address]);
 
     const fetchBalanceManagers = useCallback(async () => {
-        if (!account?.address || balanceManagerCaps.length === 0) {
+        if (!account?.address || !balanceManagerCaps || balanceManagerCaps.length === 0) {
             return;
         }
         try {
@@ -91,6 +91,9 @@ export const BalanceManagerProvider: React.FC<{ children: React.ReactNode }> = (
         }
         try {
             const fetchedPlayCaps = await fetchAllPlayCaps(account.address);
+            if (!fetchedPlayCaps) {
+                return;
+            }
             const filteredPlayCaps = fetchedPlayCaps.filter((cap) => cap.balance_manager_id === selectedBalanceManagerId);
             setCurrentManagerPlayCaps(filteredPlayCaps);
         } catch (error) {
