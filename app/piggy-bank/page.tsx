@@ -12,6 +12,6 @@ export default async function PiggyBankGame() {
     }
 
     return (
-        <OpenPlayConnectGamePage gameUrl={gameUrl} houseId={houseId} />
+        <OpenPlayConnectGamePage gameUrl={gameUrl} houseId={houseId} bgUrl='/piggy-bank-background.png' />
     );
 }

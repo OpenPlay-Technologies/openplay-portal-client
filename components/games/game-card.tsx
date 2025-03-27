@@ -1,5 +1,5 @@
 ﻿/* eslint-disable @next/next/no-img-element */
-import {Card, CardContent, CardHeader} from "@/components/ui/card"
+import { Card } from "@/components/ui/card";
 import Link from "next/link";
 
 interface GameCardProps {
@@ -12,19 +12,19 @@ interface GameCardProps {
 export default function GameCard(props: GameCardProps) {
     return (
         <Link href={props.url}>
-            <Card className={"w-[300px] h-auto overflow-hidden"}>
-                <CardHeader className="p-0">
-                    <div className="relative w-full h-full">
-                        <img
-                            src={props.image}
-                            alt={props.id + "-banner"}
-                            className="object-cover w-full h-full"
-                        />
+            <Card className="relative w-[250px] md:w-[300px] h-[300px] md:h-[400px] overflow-hidden">
+                <div className="relative w-full h-full">
+                    <img
+                        src={props.image}
+                        alt={`${props.id}-banner`}
+                        className="object-cover w-full h-full"
+                    />
+                    <div className="absolute bottom-0 left-0 w-full p-2 bg-gradient-to-t from-black to-transparent">
+                        <h2 className="text-white text-lg md:text-xl font-bold drop-shadow-md">
+                            {props.title}
+                        </h2>
                     </div>
-                </CardHeader>
-                <CardContent className="p-4 bg-card">
-                    <h2 className="text-lg font-bold mb-2 line-clamp-1">{props.title}</h2>
-                </CardContent>
+                </div>
             </Card>
         </Link>
     );
