@@ -12,7 +12,7 @@ const games: GameData[] = [
     {
         id: "1",
         title: "Sui vs Sol",
-        image: "/sui-vs-sol portrait thumbnail.png",
+        image: "/sui-vs-sol thumbnail.png",
         url: "/coin-flip/sui-vs-sol",
     },
     {
