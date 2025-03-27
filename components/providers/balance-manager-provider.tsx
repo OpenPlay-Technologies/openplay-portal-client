@@ -20,7 +20,11 @@ export interface BalanceManagerProviderContext {
     refreshBalanceManagers: () => Promise<void>; // Expose this function for manual refresh
     refreshPlayCaps: () => Promise<void>; // Expose this function for manual refresh
     currentBalanceManagerCap: BalanceManagerCapModel | null;
+    bmLoading: boolean;
+    playCapLoading: boolean;
 }
+
+const debug = true;
 
 export const BalanceManagerContext = createContext<BalanceManagerProviderContext | null>(null);
 
@@ -32,6 +36,10 @@ export const BalanceManagerProvider: React.FC<{ children: React.ReactNode }> = (
     const [balanceManagerData, setBalanceManagerData] = useState<BalanceManagerModel[]>([]);
     const [currentManagerPlayCaps, setCurrentManagerPlayCaps] = useState<PlayCapModel[]>([]);
     const [currentBalanceManagerCap, setCurrentBalanceManagerCap] = useState<BalanceManagerCapModel | null>(null);
+
+    // Loading
+    const [bmLoading, setBmLoading] = useState<boolean>(false);
+    const [playCapLoading, setPlayCapLoading] = useState<boolean>(false);
 
     useEffect(() => {
         setCurrentBalanceManager(selectedBalanceManagerId ? balanceManagerData.find(x => x.id.id == selectedBalanceManagerId) ?? null : null);
@@ -48,17 +56,21 @@ export const BalanceManagerProvider: React.FC<{ children: React.ReactNode }> = (
     }, [balanceManagerCaps, selectedBalanceManagerId]);
 
     useEffect(() => {
-        // console.log("Selected balance manager id:", selectedBalanceManagerId);
+        if (debug) console.log("Selected balance manager id:", selectedBalanceManagerId);
     }, [selectedBalanceManagerId]);
 
     const fetchBalanceManagerCaps = useCallback(async () => {
         if (!account?.address) {
+            if (debug) console.log("[fetchBalanceManagerCaps] No account address found");
             return;
         }
         try {
-            // console.log("Fetching balance manager caps");
+            setBmLoading(true);
+            if (debug) console.log("[fetchBalanceManagerCaps] Fetching balance manager caps");
             const fetchedBalanceManagerCaps = await fetchAllBalanceManagerCaps(account.address);
+            if (debug) console.log("[fetchBalanceManagerCaps] Fetched balance manager caps:", fetchedBalanceManagerCaps.length);
             setBalanceManagerCaps(fetchedBalanceManagerCaps);
+            setBmLoading(false);
         } catch (error) {
             console.error("Failed to fetch balance managers:", error);
         }
@@ -66,13 +78,17 @@ export const BalanceManagerProvider: React.FC<{ children: React.ReactNode }> = (
 
     const fetchBalanceManagers = useCallback(async () => {
         if (!account?.address || !balanceManagerCaps || balanceManagerCaps.length === 0) {
+            if (debug) console.log("[fetchBalanceManagers] No account address found or no balance manager caps found");
             return;
         }
         try {
-            // console.log("Fetching balance managers");
+            if (debug) console.log("[fetchBalanceManagers] Fetching balance managers");
+            setBmLoading(true);
             const fetchedBalanceManagers = await fetchBalanceManagersByIds(balanceManagerCaps.map((cap) => cap.balance_manager_id));
             const sortedBalanceManagers = fetchedBalanceManagers.sort((a, b) => b.balance - a.balance); // Sorting in descending order
+            if (debug) console.log("[fetchBalanceManagers] Fetched balance managers:", sortedBalanceManagers.length);
             setBalanceManagerData(sortedBalanceManagers);
+            setBmLoading(false);
         } catch (error) {
             console.error("Failed to fetch balance managers:", error);
         }
@@ -87,15 +103,20 @@ export const BalanceManagerProvider: React.FC<{ children: React.ReactNode }> = (
     
     const fetchPlayCaps = useCallback(async () => {
         if (!account?.address) {
+            if (debug) console.log("[fetchPlayCaps] No account address found");
             return;
         }
         try {
+            if (debug) console.log("[fetchPlayCaps] Fetching play caps");
+            setPlayCapLoading(true);
             const fetchedPlayCaps = await fetchAllPlayCaps(account.address);
             if (!fetchedPlayCaps) {
                 return;
             }
+            if (debug) console.log("[fetchPlayCaps] Fetched play caps:", fetchedPlayCaps.length);
             const filteredPlayCaps = fetchedPlayCaps.filter((cap) => cap.balance_manager_id === selectedBalanceManagerId);
             setCurrentManagerPlayCaps(filteredPlayCaps);
+            setPlayCapLoading(false);
         } catch (error) {
             console.error("Failed to fetch play caps:", error);
         }
@@ -125,7 +146,9 @@ export const BalanceManagerProvider: React.FC<{ children: React.ReactNode }> = (
                 currentManagerPlayCaps,
                 refreshPlayCaps: fetchPlayCaps,
                 currentBalanceManager,
-                currentBalanceManagerCap
+                currentBalanceManagerCap,
+                bmLoading,
+                playCapLoading
             }}
         >
             {children}

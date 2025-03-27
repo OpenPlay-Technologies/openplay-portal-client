@@ -28,7 +28,9 @@ export default function GameLauncher(props: GameLauncherProps) {
     const {
         currentBalanceManager,
         currentBalanceManagerCap,
-        refreshBalanceManagers
+        refreshBalanceManagers,
+        bmLoading,
+        playCapLoading
     } = useBalanceManager();
 
 
@@ -93,9 +95,20 @@ export default function GameLauncher(props: GameLauncherProps) {
                             <Wallet></Wallet>
                         </CardContent>
                     </Card>}
-                    {account && !currentBalanceManager && <BalanceManagerCard />}
-
-                    {!invisActivePlayCap && account && currentBalanceManager &&
+                    {(bmLoading || playCapLoading) && (
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>
+                                    Loading...
+                                </CardTitle>
+                                <CardDescription>
+                                    Please wait while we load your balance manager and play cap.
+                                </CardDescription>
+                            </CardHeader>
+                        </Card>
+                    )}
+                    {!playCapLoading && !bmLoading && account && !currentBalanceManager && <BalanceManagerCard />}
+                    {!playCapLoading && !bmLoading && !invisActivePlayCap && account && currentBalanceManager &&
 
                         <Card>
                             <CardHeader>
