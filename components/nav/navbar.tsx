@@ -1,6 +1,6 @@
 ﻿"use client";
 import Image from "next/image";
-import { cn } from "@/lib/utils";
+// import { cn } from "@/lib/utils";
 // import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
@@ -8,16 +8,17 @@ import Link from "next/link";
 // import NavButton from "@/components/nav/nav-button";
 import { useTheme } from "next-themes";
 import { DepositButton } from "./deposit-button";
+import AccountSidebar from "./account-sidebar";
 
 interface NavbarProps {
     transparent?: boolean;
 }
 
-const navigationLinks = [
-    { name: "Games", href: "/" },
-    { name: "Houses", href: "/houses" },
-    // {name: "Rewards", href: "/rewards"},
-]
+// const navigationLinks = [
+//     { name: "Games", href: "/" },
+//     { name: "Houses", href: "/houses" },
+//     // {name: "Rewards", href: "/rewards"},
+// ]
 
 export default function Navbar(props: NavbarProps) {
 
@@ -48,7 +49,7 @@ export default function Navbar(props: NavbarProps) {
 
             {/*Navigation Menu*/}
             <div className={"inline-flex gap-8 items-center"}>
-                {navigationLinks.map((link) => (
+                {/* {navigationLinks.map((link) => (
                     <Link
                         key={link.href}
                         href={link.href}
@@ -59,7 +60,7 @@ export default function Navbar(props: NavbarProps) {
                                 "text-foreground hover:text-foreground/70")}>
                         {link.name}
                     </Link>
-                ))}
+                ))} */}
             </div>
 
             {/*Extra links*/}
@@ -74,6 +75,7 @@ export default function Navbar(props: NavbarProps) {
                     />
                 </a> */}
                 <DepositButton balance={0.44} />
+                <AccountSidebar />
                 {/* <Wallet transparent={props.transparent} /> */}
             </div>
         </div>
