@@ -144,7 +144,10 @@ export function DepositButton({ balance = 0.44 }: DepositButtonProps) {
                     <DrawerContent>
                         <DrawerHeader>
                             <DrawerTitle>Deposit SUI</DrawerTitle>
-                            <DrawerDescription>Add funds to your balance</DrawerDescription>
+                            <DrawerDescription>
+                                Add funds to your balance
+                            </DrawerDescription>
+                            <span>Learn more</span>
                         </DrawerHeader>
                         <div className="px-4">{DepositContent}</div>
                         <DrawerFooter className="pt-2"></DrawerFooter>
@@ -156,6 +159,7 @@ export function DepositButton({ balance = 0.44 }: DepositButtonProps) {
                         <DialogHeader>
                             <DialogTitle>Deposit SUI</DialogTitle>
                             <DialogDescription>Add funds to your balance</DialogDescription>
+                            <span>Learn more</span>
                         </DialogHeader>
                         {DepositContent}
                         <DialogFooter className="pt-2"></DialogFooter>

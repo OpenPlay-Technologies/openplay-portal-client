@@ -7,8 +7,10 @@ import Link from "next/link";
 // import Wallet from "@/components/sui/wallet";
 // import NavButton from "@/components/nav/nav-button";
 import { useTheme } from "next-themes";
-import { DepositButton } from "./deposit-button";
+// import { DepositButton } from "./deposit-button";
 import AccountSidebar from "./account-sidebar";
+import { DepositActionButton } from "./deposit-action-button";
+import { DepositModal } from "../sui/deposit-modal";
 
 interface NavbarProps {
     transparent?: boolean;
@@ -27,6 +29,8 @@ export default function Navbar(props: NavbarProps) {
     useEffect(() => {
         setLoading(false);
     }, []);
+
+    const [open, setOpen] = useState(false);
 
     return (
         <div className="px-4 flex flex-row justify-between items-center h-[72px]">
@@ -74,7 +78,8 @@ export default function Navbar(props: NavbarProps) {
                         light={props.transparent}
                     />
                 </a> */}
-                <DepositButton balance={0.44} />
+                <DepositActionButton balance={0.44} onClick={() => setOpen(true)} />
+                <DepositModal open={open} onOpenChange={setOpen} />
                 <AccountSidebar />
                 {/* <Wallet transparent={props.transparent} /> */}
             </div>
