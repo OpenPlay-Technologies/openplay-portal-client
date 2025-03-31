@@ -15,7 +15,7 @@ export default function AccountSidebar() {
         <Sheet>
             <SheetTrigger asChild>
                 <Button variant="outline" size="icon" className="rounded-full">
-                    <User size={32} className="h-8 w-8" />
+                    <User strokeWidth={2.5}/>
                     <span className="sr-only">Open account menu</span>
                 </Button>
             </SheetTrigger>
