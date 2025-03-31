@@ -1,6 +1,6 @@
 "use client"
 
-import { ArrowLeftRight, CreditCard, History, LogOut, User, Users, Wallet } from "lucide-react"
+import { ArrowUpRight, Gift, History, LifeBuoy, LogOut, RefreshCw, User, Users, Wallet } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
@@ -41,25 +41,40 @@ export default function AccountSidebar() {
                         {/* Wallet Information */}
                         <div className="space-y-4 py-4">
                             <div className="px-1">
-                                <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
+                                <p className="text-xs text-muted-foreground">Connected Wallet</p>
+                                <div className="flex items-center gap-2 mt-1">
                                     <Wallet className="h-4 w-4" />
-                                    <span className="font-mono">{formatAddress(mockAddress)}</span>
+                                    <span className="text-sm">{formatAddress(mockAddress)}</span>
                                 </div>
                             </div>
 
                             <div className="bg-muted rounded-lg p-4 shadow-sm">
                                 <div className="flex flex-col space-y-3">
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-sm font-medium text-foreground">Balance Manager</span>
-                                        <span className="text-xs text-muted-foreground">{formatAddress(mockAddress)}</span>
+                                    <div className="flex items-start justify-between">
+                                        <div className="flex flex-col">
+                                            <span className="text-sm font-medium text-foreground">Balance Manager</span>
+                                            <span className="text-xs text-muted-foreground mt-0.5">{formatAddress(mockAddress)}</span>
+                                        </div>
+                                        <Link
+                                            href="/balance-manager"
+                                            className="flex items-center text-xs text-muted-foreground hover:text-primary transition-colors"
+                                            onClick={closeSheet}
+                                        >
+                                            <span>See Details</span>
+                                            <ArrowUpRight className="ml-1 h-3 w-3" />
+                                        </Link>
                                     </div>
-                                    <div className="flex items-center justify-between">
+
+                                    <div className="flex items-center justify-between pt-1">
                                         <span className="text-2xl font-semibold text-foreground">{formatSuiAmount(0.44e9)}</span>
-                                        <Button variant="outline" size="sm" onClick={() => { closeSheet(); }}>
-                                            <Link
-                                                href="/balance-manager">
-                                                Switch
-                                            </Link>
+                                    </div>
+
+                                    <div className="flex gap-2 pt-2">
+                                        <Button className="flex-1" onClick={() => { setDepositOpen(true); closeSheet(); }}>
+                                            Deposit
+                                        </Button>
+                                        <Button variant="outline" className="flex-1" onClick={() => { setWithdrawalOpen(true); closeSheet(); }}>
+                                            Withdraw
                                         </Button>
                                     </div>
                                 </div>
@@ -71,7 +86,7 @@ export default function AccountSidebar() {
                         {/* Navigation Links */}
                         <nav className="flex-1 py-4">
                             <ul className="space-y-2">
-                                <li>
+                                {/* <li>
                                     <Button variant="ghost" className="w-full justify-start gap-3 h-12" onClick={() => { setDepositOpen(true); closeSheet(); }}>
                                         <CreditCard className="h-5 w-5" />
                                         <span>Deposit</span>
@@ -82,7 +97,7 @@ export default function AccountSidebar() {
                                         <ArrowLeftRight className="h-5 w-5" />
                                         <span>Withdraw</span>
                                     </Button>
-                                </li>
+                                </li> */}
                                 <li>
                                     <Button variant="ghost" className="w-full justify-start gap-3 h-12">
                                         <Users className="h-5 w-5" />
@@ -95,6 +110,25 @@ export default function AccountSidebar() {
                                         <span>Transaction History</span>
                                     </Button>
                                 </li>
+                                <li>
+                                    <Button variant="ghost" className="w-full justify-start gap-3 h-12">
+                                        <RefreshCw className="h-5 w-5" />
+                                        <span>Free Spins</span>
+                                    </Button>
+                                </li>
+                                <li>
+                                    <Button variant="ghost" className="w-full justify-start gap-3 h-12">
+                                        <Gift className="h-5 w-5" />
+                                        <span>Bonuses</span>
+                                    </Button>
+                                </li>
+                                <li>
+                                    <Button variant="ghost" className="w-full justify-start gap-3 h-12">
+                                        <LifeBuoy className="h-5 w-5" />
+                                        <span>Responsible Gaming</span>
+                                    </Button>
+                                </li>
+
                             </ul>
                         </nav>
 

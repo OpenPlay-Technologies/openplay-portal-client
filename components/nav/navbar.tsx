@@ -68,7 +68,7 @@ export default function Navbar(props: NavbarProps) {
             </div>
 
             {/*Extra links*/}
-            <div className={"flex flex-row gap-2 p-4"}>
+            <div className={"flex flex-row gap-2"}>
                 {/*<ModeToggle/>*/}
                 {/* <a href={process.env.NEXT_PUBLIC_GITBOOK_URL ?? ""} target={"_blank"} >
                     <NavButton
