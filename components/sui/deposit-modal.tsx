@@ -287,7 +287,7 @@ export function DepositModal({ open, onOpenChange }: DepositModalProps) {
                         Your funds have been added to your balance.
                     </p>
                     <Button onClick={handleClose} className="mt-4">
-                        Continue
+                        Close
                     </Button>
                 </div>
             )}

@@ -257,7 +257,7 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
                         {formatSuiAmount(withdrawalAmount)} has been sent to your wallet.
                     </p>
                     <Button onClick={handleClose} className="mt-4">
-                        Continue
+                        Close
                     </Button>
                 </div>
             )}
