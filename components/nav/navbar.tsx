@@ -1,26 +1,15 @@
 ﻿"use client";
 import Image from "next/image";
-// import { cn } from "@/lib/utils";
-// import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-// import Wallet from "@/components/sui/wallet";
-// import NavButton from "@/components/nav/nav-button";
 import { useTheme } from "next-themes";
-// import { DepositButton } from "./deposit-button";
 import AccountSidebar from "./account-sidebar";
 import { DepositActionButton } from "./deposit-action-button";
-import { DepositModal } from "../sui/deposit-modal";
+import { useCurrentAccount, useAutoConnectWallet } from "@mysten/dapp-kit";
 
 interface NavbarProps {
     transparent?: boolean;
 }
-
-// const navigationLinks = [
-//     { name: "Games", href: "/" },
-//     { name: "Houses", href: "/houses" },
-//     // {name: "Rewards", href: "/rewards"},
-// ]
 
 export default function Navbar(props: NavbarProps) {
 
@@ -30,7 +19,10 @@ export default function Navbar(props: NavbarProps) {
         setLoading(false);
     }, []);
 
-    const [open, setOpen] = useState(false);
+    const currentAccount = useCurrentAccount();
+
+    const autoConnectionStatus = useAutoConnectWallet();
+
 
     return (
         <div className="px-4 flex flex-row justify-between items-center h-[72px]">
@@ -43,46 +35,18 @@ export default function Navbar(props: NavbarProps) {
                     :
                     <Link className={"flex-shrink-0"} href={"/"}>
                         {props.transparent || theme.theme == "dark" || (theme.theme == "system" && theme.systemTheme == "dark") ?
-
                             <Image src={"/OpenPlay-Inverted-Color.png"} width={150} height={34} alt={"OpenPlay"} />
                             :
                             <Image src={"/OpenPlay Main Logo (2).png"} width={150} height={34} alt={"OpenPlay"} />}
                     </Link>
             }
 
-
-            {/*Navigation Menu*/}
-            <div className={"inline-flex gap-8 items-center"}>
-                {/* {navigationLinks.map((link) => (
-                    <Link
-                        key={link.href}
-                        href={link.href}
-                        className={cn("cursor-pointer inline-flex gap-2 items-center bg-transparent hover:bg-transparent focus:bg-transparent data-[active]:bg-transparent data-[state=open]:bg-transparent font-semibold text-lg",
-                            props.transparent ?
-                                "text-background hover:text-background/70"
-                                :
-                                "text-foreground hover:text-foreground/70")}>
-                        {link.name}
-                    </Link>
-                ))} */}
-            </div>
-
-            {/*Extra links*/}
-            <div className={"flex flex-row gap-2"}>
-                {/*<ModeToggle/>*/}
-                {/* <a href={process.env.NEXT_PUBLIC_GITBOOK_URL ?? ""} target={"_blank"} >
-                    <NavButton
-                        tabIndex={0}
-                        text="Docs"
-                        icon={<ArrowTopRightOnSquareIcon className="w-6 h-6" />}
-                        light={props.transparent}
-                    />
-                </a> */}
-                <DepositActionButton balance={0.44} onClick={() => setOpen(true)} />
-                <DepositModal open={open} onOpenChange={setOpen} />
-                <AccountSidebar />
-                {/* <Wallet transparent={props.transparent} /> */}
-            </div>
+            {autoConnectionStatus == "attempted" &&
+                <div className={"flex flex-row gap-2"}>
+                    <DepositActionButton />
+                    {currentAccount && <AccountSidebar />}
+                </div>
+            }
         </div>
     );
 }

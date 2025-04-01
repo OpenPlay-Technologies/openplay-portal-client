@@ -1,10 +1,8 @@
 "use client"
 
-import Link from "next/link"
 import { ExternalLink, MessageSquare } from "lucide-react"
 
-import { Button } from "@/components/ui/button"
-import { DiscordIcon, GithubIcon, TelegramIcon, XIcon } from "../nav/footer"
+import { GithubIcon } from "../nav/footer"
 
 export default function CollaborationCTA() {
   return (
@@ -21,7 +19,7 @@ export default function CollaborationCTA() {
         <div className="mt-10">
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             <div className="flex flex-col items-center space-y-2 p-4 rounded-lg bg-muted/50">
-              <div className="p-2 rounded-full bg-primary/20">
+              <div className="p-2 rounded-full bg-primary/10">
                 <ExternalLink className="h-6 w-6 text-primary" />
               </div>
               <h3 className="text-lg font-medium">Plug & Play Games</h3>
@@ -30,7 +28,7 @@ export default function CollaborationCTA() {
               </p>
             </div>
             <div className="flex flex-col items-center space-y-2 p-4 rounded-lg bg-muted/50">
-              <div className="p-2 rounded-full bg-primary/20">
+              <div className="p-2 rounded-full bg-primary/10">
                 <GithubIcon />
               </div>
               <h3 className="text-lg font-medium">Open Source</h3>
@@ -39,7 +37,7 @@ export default function CollaborationCTA() {
               </p>
             </div>
             <div className="flex flex-col items-center space-y-2 p-4 rounded-lg bg-muted/50">
-              <div className="p-2 rounded-full bg-primary/20">
+              <div className="p-2 rounded-full bg-primary/10">
                 <MessageSquare className="h-6 w-6 text-primary" />
               </div>
               <h3 className="text-lg font-medium">B2B Partnerships</h3>
@@ -56,25 +54,8 @@ export default function CollaborationCTA() {
           </div>
         </div>
         <div className="mt-12 flex flex-col items-center space-y-4">
-          <div className="flex justify-center space-x-4">
-            <Button variant="outline" size="lg" className="hover:bg-accent">
-              <Link href="https://t.me/dev_0x0687" className="flex items-center gap-2">
-                <TelegramIcon />
-                <span>Telegram</span>
-              </Link>
-            </Button>
-            <Button variant="outline" size="lg" className="hover:bg-accent">
-              <Link href="https://discord.gg/JF2grat2rZ" className="flex items-center gap-2">
-                <DiscordIcon />
-                <span>Discord</span>
-              </Link>
-            </Button>
-            <Button variant="outline" size="lg" className="hover:bg-accent">
-              <Link href="https://x.com/0x0687" className="flex items-center gap-2">
-                <XIcon />
-                <span>X.com</span>
-              </Link>
-            </Button>
+          <div className="flex justify-center space-x-4 underline">
+            <a href="mailto:0x0687.dev@gmail.com">0x0687.dev@gmail.com</a>
           </div>
           <p className="text-sm text-center text-muted-foreground">
             Let&apos;s build the future of gaming together

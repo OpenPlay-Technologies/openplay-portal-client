@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import {
     Dialog,
@@ -18,14 +18,20 @@ import {
     DrawerDescription,
     DrawerFooter,
 } from "@/components/ui/drawer"
-// import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Slider } from "@/components/ui/slider"
 import { CheckCircle2, Wallet } from "lucide-react"
 import { useMobile } from "@/hooks/use-mobile"
 import Link from "next/link"
-import { cn, formatAddress } from "@/lib/utils"
+import { cn, formatAddress, formatSuiAmount } from "@/lib/utils"
+
+// New imports to implement real withdrawal logic (similar to deposit modal)
+import { useSignTransaction, useCurrentAccount } from "@mysten/dapp-kit"
+import { useInvisibleWallet } from "../providers/invisible-wallet-provider"
+import { useBalanceManager } from "../providers/balance-manager-provider"
+import { Transaction } from "@mysten/sui/transactions"
+import { buildWithdrawFromBalanceManagerTransaction, executeAndWaitForTransactionBlock } from "@/app/actions"
 
 interface WithdrawalModalProps {
     open: boolean
@@ -33,67 +39,151 @@ interface WithdrawalModalProps {
 }
 
 export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
-    const connectedWalletAddress = "0x123456789abcdef"
-    const [address, setAddress] = useState<string>(connectedWalletAddress);
-    const [percentage, setPercentage] = useState<number>(100)
+    // Local state declarations
+    const [percentage, setPercentage] = useState<number>(50)
     const [isSuccess, setIsSuccess] = useState(false)
+    const [loading, setLoading] = useState(false)
+    const [signing, setSigning] = useState(false)
+    const [isSubmitting, setIsSubmitting] = useState(false)
+    const [errorMsg, setErrorMsg] = useState<string | undefined>()
+    const [withdrawalAmount, setWithdrawalAmount] = useState<number>(0);
+
+    // Hooks from deposit modal logic
     const isMobile = useMobile()
+    const { mutate: signTransaction } = useSignTransaction()
+    const account = useCurrentAccount()
+    const { walletAddress: invisWalletAddress, updatePlayCaps: updateInvisWalletPlayCaps } = useInvisibleWallet()
+    const { refreshBalanceManagers, refreshBalanceManagerCaps, refreshPlayCaps, currentBalanceManager, currentBalanceManagerCap } = useBalanceManager()
 
-    // Simulated connected wallet address and balance
-    const totalBalance = 0.44 // in SUI
+    // Compute withdrawal amount based on slider percentage
+    // const withdrawalAmount = currentBalanceManager ? Math.round(currentBalanceManager.balance * percentage / 100) : 0
 
-    const withdrawalAmount = (totalBalance * percentage) / 100
-
-    const handleWithdrawal = () => {
-        if (!address) return
-
-        // Simulate withdrawal processing
+    // Reset transient states when modal opens/closes
+    useEffect(() => {
         setTimeout(() => {
-            setIsSuccess(true)
-            // Reset fields after showing success
-            setTimeout(() => {
-                setAddress("")
-                setPercentage(100)
-            }, 500)
-        }, 1000)
-    }
-
-    //   const handleUseConnectedWallet = () => {
-    //     setAddress(connectedWalletAddress)
-    //   }
-
-    const handleClose = () => {
-        if (isSuccess) {
             setIsSuccess(false)
-            onOpenChange(false)
+            setErrorMsg(undefined)
+            setLoading(false)
+            setSigning(false)
+            setIsSubmitting(false)
+            setPercentage(50)
+        }, 500)
+    }, [open])
+
+    // Withdrawal submission handler with real transaction logic
+    async function handleWithdrawal() {
+        setLoading(true)
+        setIsSubmitting(false)
+        setSigning(false)
+        setErrorMsg(undefined)
+        setIsSuccess(false)
+
+        try {
+            // Check if necessary wallet and account info exist
+            if (!account || !invisWalletAddress) {
+                throw new Error("No wallet connected")
+            }
+
+            if (!withdrawalAmount) {
+                throw new Error("Withdrawal amount cannot be zero");;
+            }
+
+            if (!currentBalanceManager || !currentBalanceManagerCap) {
+                throw new Error("No balance manager or cap found");
+            }
+            const bytes = await buildWithdrawFromBalanceManagerTransaction(account.address, currentBalanceManager.id.id, currentBalanceManagerCap.id.id, withdrawalAmount);
+
+            if (!bytes) {
+                throw new Error("Failed to build transaction bytes");
+            }
+
+            const tx = Transaction.from(bytes)
+            setSigning(true)
+
+            signTransaction(
+                { transaction: tx },
+                {
+                    onSuccess: (result) => {
+                        setSigning(false)
+                        setIsSubmitting(true)
+                        executeAndWaitForTransactionBlock(result.bytes, result.signature)
+                            .then(() => {
+                                setIsSubmitting(false)
+                                setIsSuccess(true)
+                                // TODO: Add any refresh logic similar to deposit modal if necessary.
+                                refreshBalanceManagers()
+                                refreshBalanceManagerCaps()
+                                refreshPlayCaps()
+                                updateInvisWalletPlayCaps()
+                            })
+                            .catch((error) => {
+                                setIsSubmitting(false)
+                                setSigning(false)
+                                setLoading(false)
+                                setIsSuccess(false)
+                                console.error("Transaction failed", error)
+                                setErrorMsg(error.message)
+                            })
+                    },
+                    onError: (error) => {
+                        setIsSubmitting(false)
+                        setSigning(false)
+                        setLoading(false)
+                        setIsSuccess(false)
+                        console.error("Error signing transaction:", error)
+                        setErrorMsg(error.message)
+                    },
+                }
+            )
+        }
+        catch (error) {
+            const errorMsg = error instanceof Error ? error.message : "An unknown error occurred"
+            setErrorMsg(errorMsg)
+            console.error("Error during withdrawal:", errorMsg)
+
+            setLoading(false);
+            setSigning(false);
+            setIsSubmitting(false);
+            setIsSuccess(false);
         }
     }
 
+    useEffect(() => {
+        if (!isSuccess && currentBalanceManager) {
+            const withdrawalAmount = Math.round(currentBalanceManager.balance * percentage / 100);
+            setWithdrawalAmount(withdrawalAmount)
+        }
+    }, [percentage, isSuccess, currentBalanceManager])
+
+    // Handle closing the modal once the withdrawal is successful
+    const handleClose = () => {
+        onOpenChange(false);
+    }
+
+    // Handle slider percentage changes
     const handlePercentageChange = (value: number[]) => {
         setPercentage(value[0])
     }
 
+    // Preset percentage buttons handler
     const setPresetPercentage = (value: number) => {
         setPercentage(value)
     }
 
+    // Content for withdrawal form or success message
     const WithdrawalContent = (
         <>
             {!isSuccess ? (
                 <div className="space-y-6">
                     <div className="space-y-4">
                         <div>
-                            {/* <div className="flex items-center justify-between mb-2">
-                                <Label>Current Balance</Label>
-                                <span className="font-medium">{totalBalance.toFixed(4)} SUI</span>
-                            </div> */}
                             <div className="p-4 rounded-lg border bg-muted/30 flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                     <Wallet className="h-5 w-5 text-muted-foreground" />
                                     <span className="text-sm font-medium">Withdrawal Amount</span>
                                 </div>
                                 <div className="text-right">
-                                    <div className="text-lg font-semibold">{withdrawalAmount.toFixed(4)} SUI</div>
+                                    <div className="text-lg font-semibold">{formatSuiAmount(withdrawalAmount)}</div>
                                     <div className="text-xs text-muted-foreground">{percentage}% of balance</div>
                                 </div>
                             </div>
@@ -124,40 +214,47 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
                             </div>
                         </div>
 
-                        {/* <div className="space-y-2">
-              <Label htmlFor="withdrawal-address">Withdrawal Address</Label>
-              <Input
-                id="withdrawal-address"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                placeholder="Enter wallet address"
-              />
-              <Button variant="link" onClick={handleUseConnectedWallet} className="h-auto p-0 text-xs">
-                Use connected wallet ({connectedWalletAddress.substring(0, 6)}...
-                {connectedWalletAddress.substring(connectedWalletAddress.length - 4)})
-              </Button>
-            </div> */}
+                        {/* Alerts for transaction progress/errors */}
+                        {signing && (
+                            <Alert>
+                                <AlertTitle>Signing Transaction...</AlertTitle>
+                                <AlertDescription>
+                                    Please approve the withdrawal in your wallet.
+                                </AlertDescription>
+                            </Alert>
+                        )}
 
-                        {/* <Alert className="bg-muted/50">
-                            <AlertDescription>Ensure the wallet address is correct. Withdrawals are irreversible.</AlertDescription>
-                        </Alert> */}
-                        <Alert className="bg-muted/50">
-                            <AlertDescription>Funds are automatically withdrawn to your connect wallet: {formatAddress(connectedWalletAddress)}</AlertDescription>
-                        </Alert>
+                        {isSubmitting && (
+                            <Alert>
+                                <AlertTitle>Processing Withdrawal...</AlertTitle>
+                                <AlertDescription>
+                                    Please wait while we process your withdrawal on the SUI network.
+                                </AlertDescription>
+                            </Alert>
+                        )}
+
+                        {errorMsg && (
+                            <Alert variant="destructive">
+                                <AlertTitle>Something went wrong</AlertTitle>
+                                <AlertDescription>
+                                    {errorMsg}
+                                    <br />
+                                    Please try again or contact support.
+                                </AlertDescription>
+                            </Alert>
+                        )}
                     </div>
 
-                    <Button onClick={handleWithdrawal} disabled={!address || percentage === 0} className="w-full">
-                        Withdraw {withdrawalAmount.toFixed(4)} SUI
+                    <Button onClick={handleWithdrawal} disabled={loading || percentage === 0} className="w-full">
+                        Withdraw {formatSuiAmount(withdrawalAmount)}
                     </Button>
                 </div>
             ) : (
                 <div className="py-6 flex flex-col items-center justify-center space-y-4">
-                    <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
-                        <CheckCircle2 className="h-8 w-8 text-primary" />
-                    </div>
+                    <CheckCircle2 className="h-16 w-16 text-green-500" />
                     <h3 className="text-xl font-medium">Withdrawal Successful!</h3>
                     <p className="text-center text-muted-foreground">
-                        {withdrawalAmount.toFixed(4)} SUI has been sent to your wallet.
+                        {formatSuiAmount(withdrawalAmount)} has been sent to your wallet.
                     </p>
                     <Button onClick={handleClose} className="mt-4">
                         Continue
@@ -167,13 +264,19 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
         </>
     )
 
+    // Render as a Drawer on mobile and Dialog on larger screens
     if (isMobile) {
         return (
             <Drawer open={open} onOpenChange={onOpenChange}>
                 <DrawerContent>
-                    <DrawerHeader className="border-b">
+                    <DrawerHeader>
                         <DrawerTitle>Withdraw Funds</DrawerTitle>
                         <DrawerDescription>Send SUI to your wallet</DrawerDescription>
+                        <Alert className="bg-muted/50">
+                            <AlertDescription>
+                                Funds are automatically withdrawn to your connected wallet: {account ? formatAddress(account.address) : "Unknown"}
+                            </AlertDescription>
+                        </Alert>
                     </DrawerHeader>
                     <div className="px-4 py-4">{WithdrawalContent}</div>
                     <DrawerFooter className="pt-2" />
@@ -193,6 +296,11 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
                             Learn more
                         </Link>
                     </DialogDescription>
+                    <Alert className="bg-muted/50">
+                        <AlertDescription>
+                            Funds are automatically withdrawn to your connected wallet: {account ? formatAddress(account.address) : "Unknown"}
+                        </AlertDescription>
+                    </Alert>
                 </DialogHeader>
                 {WithdrawalContent}
                 <DialogFooter className="pt-2" />
@@ -200,4 +308,3 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
         </Dialog>
     )
 }
-

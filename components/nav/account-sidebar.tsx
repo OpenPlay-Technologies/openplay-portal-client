@@ -10,14 +10,17 @@ import { useState } from "react"
 import { WithdrawalModal } from "../sui/withdrawal-modal"
 import Link from "next/link"
 import { ThemeSwitcher } from "../ui/theme-switcher"
+import { useCurrentAccount, useDisconnectWallet } from "@mysten/dapp-kit"
+import { useBalanceManager } from "../providers/balance-manager-provider"
 
 export default function AccountSidebar() {
 
-    const mockAddress = "0x8cb6ed24482188103415e7c73698fbd787bd8e78578f524b5cf39c3de9f1accd"
+    const currentAccount = useCurrentAccount();
+    const { currentBalanceManager, bmLoading } = useBalanceManager();
 
     const [depositOpen, setDepositOpen] = useState(false);
     const [withdrawalOpen, setWithdrawalOpen] = useState(false);
-
+    const { mutate: disconnect } = useDisconnectWallet();
     const [sheetOpen, setSheetOpen] = useState(false);
 
     // Function to close the sheet from anywhere
@@ -44,41 +47,70 @@ export default function AccountSidebar() {
                                 <p className="text-xs text-muted-foreground">Connected Wallet</p>
                                 <div className="flex items-center gap-2 mt-1">
                                     <Wallet className="h-4 w-4" />
-                                    <span className="text-sm">{formatAddress(mockAddress)}</span>
+                                    <span className="text-sm">{currentAccount?.address ? formatAddress(currentAccount.address) : "Unknown"}</span>
                                 </div>
                             </div>
 
-                            <div className="bg-muted rounded-lg p-4 shadow-sm">
-                                <div className="flex flex-col space-y-3">
-                                    <div className="flex items-start justify-between">
-                                        <div className="flex flex-col">
-                                            <span className="text-sm font-medium text-foreground">Balance Manager</span>
-                                            <span className="text-xs text-muted-foreground mt-0.5">{formatAddress(mockAddress)}</span>
+                            {bmLoading ? (
+                                <div className="bg-muted rounded-lg p-4 shadow-sm animate-pulse dark:bg-muted">
+                                    <div className="flex flex-col space-y-3">
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex flex-col space-y-1">
+                                                {/* Title placeholder */}
+                                                <div className="h-4 w-32 bg-gray-300 dark:bg-gray-600 rounded" />
+                                                {/* Address placeholder */}
+                                                <div className="h-3 w-24 bg-gray-300 dark:bg-gray-600 rounded mt-0.5" />
+                                            </div>
+                                            {/* See Details placeholder */}
+                                            <div className="h-3 w-20 bg-gray-300 dark:bg-gray-600 rounded" />
                                         </div>
-                                        <Link
-                                            href="/balance-manager"
-                                            className="flex items-center text-xs text-muted-foreground hover:text-primary transition-colors"
-                                            onClick={closeSheet}
-                                        >
-                                            <span>See Details</span>
-                                            <ArrowUpRight className="ml-1 h-3 w-3" />
-                                        </Link>
-                                    </div>
 
-                                    <div className="flex items-center justify-between pt-1">
-                                        <span className="text-2xl font-semibold text-foreground">{formatSuiAmount(0.44e9)}</span>
-                                    </div>
+                                        <div className="flex items-center justify-between pt-1">
+                                            {/* Balance placeholder */}
+                                            <div className="h-6 w-28 bg-gray-300 dark:bg-gray-600 rounded" />
+                                        </div>
 
-                                    <div className="flex gap-2 pt-2">
-                                        <Button className="flex-1" onClick={() => { setDepositOpen(true); closeSheet(); }}>
-                                            Deposit
-                                        </Button>
-                                        <Button variant="outline" className="flex-1" onClick={() => { setWithdrawalOpen(true); closeSheet(); }}>
-                                            Withdraw
-                                        </Button>
+                                        <div className="flex gap-2 pt-2">
+                                            {/* Deposit button placeholder */}
+                                            <div className="h-8 flex-1 bg-gray-300 dark:bg-gray-600 rounded" />
+                                            {/* Withdraw button placeholder */}
+                                            <div className="h-8 flex-1 bg-gray-300 dark:bg-gray-600 rounded" />
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            ) : (
+                                <div className="bg-muted rounded-lg p-4 shadow-sm">
+                                    <div className="flex flex-col space-y-3">
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex flex-col">
+                                                <span className="text-sm font-medium text-foreground">Balance Manager</span>
+                                                <span className="text-xs text-muted-foreground mt-0.5">{currentBalanceManager ? formatAddress(currentBalanceManager.id.id) : ""}</span>
+                                            </div>
+                                            <Link
+                                                href="/balance-manager"
+                                                className="flex items-center text-xs text-muted-foreground hover:text-primary transition-colors"
+                                                onClick={closeSheet}
+                                            >
+                                                <span>See Details</span>
+                                                <ArrowUpRight className="ml-1 h-3 w-3" />
+                                            </Link>
+                                        </div>
+
+                                        <div className="flex items-center justify-between pt-1">
+                                            <span className="text-2xl font-semibold text-foreground">{formatSuiAmount(currentBalanceManager ? currentBalanceManager.balance : 0)}</span>
+                                        </div>
+
+                                        <div className="flex gap-2 pt-2">
+                                            <Button className="flex-1" onClick={() => { setDepositOpen(true); closeSheet(); }}>
+                                                Deposit
+                                            </Button>
+                                            <Button variant="outline" className="flex-1" onClick={() => { setWithdrawalOpen(true); closeSheet(); }}>
+                                                Withdraw
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         <Separator />
@@ -140,7 +172,7 @@ export default function AccountSidebar() {
 
                         {/* Logout Button */}
                         <div className="py-4">
-                            <Button variant="outline" className="w-full justify-start gap-3">
+                            <Button variant="outline" className="w-full justify-start gap-3" onClick={() => { disconnect(); closeSheet(); }}>
                                 <LogOut className="h-5 w-5" />
                                 <span>Disconnect Wallet</span>
                             </Button>

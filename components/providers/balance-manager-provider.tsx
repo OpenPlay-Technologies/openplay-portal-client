@@ -70,7 +70,9 @@ export const BalanceManagerProvider: React.FC<{ children: React.ReactNode }> = (
             const fetchedBalanceManagerCaps = await fetchAllBalanceManagerCaps(account.address);
             if (debug) console.log("[fetchBalanceManagerCaps] Fetched balance manager caps:", fetchedBalanceManagerCaps.length);
             setBalanceManagerCaps(fetchedBalanceManagerCaps);
-            setBmLoading(false);
+            if (fetchedBalanceManagerCaps.length == 0){
+                setBmLoading(false);
+            }
         } catch (error) {
             console.error("Failed to fetch balance managers:", error);
         }

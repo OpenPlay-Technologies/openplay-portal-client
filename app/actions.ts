@@ -167,7 +167,7 @@ export async function waitForTransaction(digest: string) {
 export async function buildDepositToExistingBalanceManagerTransaction(sender: string, balanceManagerId: string, balanceManagerCapId: string, amount: number, playCapDestination: string | null) {
     const tx = new Transaction();
 
-    const [coin] = tx.splitCoins(tx.gas, [amount * 1e9]);
+    const [coin] = tx.splitCoins(tx.gas, [amount]);
     tx.moveCall({
         target: DEPOSIT_BALANCE_MANAGER_FUNCTION_TARGET,
         arguments: [
@@ -204,7 +204,7 @@ export async function buildDepositToNewBalanceManagerTransaction(sender: string,
         arguments: [],
     });
 
-    const [coin] = tx.splitCoins(tx.gas, [amount * 1e9]);
+    const [coin] = tx.splitCoins(tx.gas, [amount]);
     tx.moveCall({
         target: DEPOSIT_BALANCE_MANAGER_FUNCTION_TARGET,
         arguments: [
@@ -249,7 +249,7 @@ export async function buildWithdrawFromBalanceManagerTransaction(sender: string,
         arguments: [
             tx.object(balanceManagerId),
             tx.object(balanceManagerCapId),
-            tx.pure.u64(amount * 1e9)
+            tx.pure.u64(amount)
         ],
     });
     tx.transferObjects([coin], sender);

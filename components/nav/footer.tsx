@@ -12,7 +12,7 @@ export default function Footer() {
                         </p>
                         <div className="flex items-center justify-center md:justify-start space-x-6">
                             <Link
-                                href="https://x.com/0x0687"
+                                href="https://x.com/OpenPlay_Tech"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-muted-foreground hover:text-primary transition-colors"
@@ -21,12 +21,21 @@ export default function Footer() {
                                 <span className="sr-only">Twitter</span>
                             </Link>
                             <Link
-                                href="https://t.me/dev_0x0687"
+                                href="https://t.me/+S_JkbgwosU43NjY8"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-muted-foreground hover:text-primary transition-colors"
                             >
                                 <TelegramIcon />
+                                <span className="sr-only">Discord</span>
+                            </Link>
+                            <Link
+                                href="https://discord.gg/JF2grat2rZ"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-muted-foreground hover:text-primary transition-colors"
+                            >
+                                <DiscordIcon />
                                 <span className="sr-only">Discord</span>
                             </Link>
                         </div>

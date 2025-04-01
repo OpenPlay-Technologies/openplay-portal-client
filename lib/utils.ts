@@ -5,8 +5,8 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function formatSuiAmount(amount: number) {
-  return (amount / 1e9).toFixed(2) + " SUI"
+export function formatSuiAmount(amount: number, precision = 2) {
+  return (amount / 1e9).toFixed(precision) + " SUI"
 }
 
 
