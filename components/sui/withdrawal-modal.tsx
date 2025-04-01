@@ -32,6 +32,7 @@ import { useInvisibleWallet } from "../providers/invisible-wallet-provider"
 import { useBalanceManager } from "../providers/balance-manager-provider"
 import { Transaction } from "@mysten/sui/transactions"
 import { buildWithdrawFromBalanceManagerTransaction, executeAndWaitForTransactionBlock } from "@/app/actions"
+import { Loader } from "../ui/loader"
 
 interface WithdrawalModalProps {
     open: boolean
@@ -216,21 +217,11 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
 
                         {/* Alerts for transaction progress/errors */}
                         {signing && (
-                            <Alert>
-                                <AlertTitle>Signing Transaction...</AlertTitle>
-                                <AlertDescription>
-                                    Please approve the withdrawal in your wallet.
-                                </AlertDescription>
-                            </Alert>
+                            <Loader title="Signing Transaction" body="Please approve the withdrawal in your wallet." className="mt-4" />
                         )}
 
                         {isSubmitting && (
-                            <Alert>
-                                <AlertTitle>Processing Withdrawal...</AlertTitle>
-                                <AlertDescription>
-                                    Please wait while we process your withdrawal on the SUI network.
-                                </AlertDescription>
-                            </Alert>
+                            <Loader title="Processing Withdrawal" body="Please wait while we process your withdrawal on the SUI network." className="mt-4" />
                         )}
 
                         {errorMsg && (

@@ -35,6 +35,7 @@ import {
     executeAndWaitForTransactionBlock,
 } from "@/app/actions";
 import { Transaction } from "@mysten/sui/transactions";
+import { Loader } from "../ui/loader";
 
 interface DepositModalProps {
     open: boolean;
@@ -244,21 +245,11 @@ export function DepositModal({ open, onOpenChange }: DepositModalProps) {
                         </div>
 
                         {signing && (
-                            <Alert>
-                                <AlertTitle>Signing Transaction..</AlertTitle>
-                                <AlertDescription>
-                                    Please approve the deposit in your wallet.
-                                </AlertDescription>
-                            </Alert>
+                            <Loader title="Signing Transaction" body="Please approve the deposit in your wallet." />
                         )}
 
                         {isSubmitting && (
-                            <Alert>
-                                <AlertTitle>Processing Deposit..</AlertTitle>
-                                <AlertDescription>
-                                    Please wait while we process your deposit on the SUI network.
-                                </AlertDescription>
-                            </Alert>
+                            <Loader title="Processing Deposit" body="Please wait while we process your deposit on the SUI network." />
                         )}
 
                         {errorMsg && (

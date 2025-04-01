@@ -101,7 +101,7 @@ export default function AccountSidebar() {
                                         </div>
 
                                         <div className="flex gap-2 pt-2">
-                                            <Button className="flex-1" onClick={() => { setDepositOpen(true); closeSheet(); }}>
+                                            <Button className="flex-1 bg-gradient-to-r from-openplay1 to-openplay2 font-semibold" onClick={() => { setDepositOpen(true); closeSheet(); }}>
                                                 Deposit
                                             </Button>
                                             <Button variant="outline" className="flex-1" onClick={() => { setWithdrawalOpen(true); closeSheet(); }}>
