@@ -17,6 +17,7 @@ export interface BalanceManagerProviderContext {
     balanceManagerData: BalanceManagerModel[];
     currentManagerPlayCaps: PlayCapModel[];
     refreshData: () => Promise<void>;
+    refreshPlayCaps: () => Promise<void>;
     currentBalanceManagerCap: BalanceManagerCapModel | null;
     bmLoading: boolean;
     playCapLoading: boolean;
@@ -155,6 +156,31 @@ export const BalanceManagerProvider: React.FC<{ children: React.ReactNode }> = (
     }, [accountAddress, selectedBalanceManagerId]);
 
     /**
+     * Refreshes only the play caps for the current selected balance manager
+     */
+    const refreshPlayCaps = useCallback(async (): Promise<void> => {
+        if (!selectedBalanceManagerId || !accountAddress) {
+            if (debug) console.log("refreshPlayCaps: No selected manager or account address");
+            return;
+        }
+
+        setPlayCapLoading(true);
+        setError(null);
+
+        try {
+            if (debug) console.log("refreshPlayCaps: Refreshing play caps for manager:", selectedBalanceManagerId);
+            await fetchPlayCaps();
+            if (debug) console.log("refreshPlayCaps: Successfully refreshed play caps");
+        } catch (err) {
+            const error = err instanceof Error ? err : new Error(String(err));
+            console.error("refreshPlayCaps: Failed to refresh play caps:", error);
+            setError(error);
+        } finally {
+            setPlayCapLoading(false);
+        }
+    }, [accountAddress, selectedBalanceManagerId, fetchPlayCaps]);
+
+    /**
      * Main data fetching function that orchestrates the entire data loading flow
      */
     const fetchAllData = useCallback(async () => {
@@ -264,6 +290,7 @@ export const BalanceManagerProvider: React.FC<{ children: React.ReactNode }> = (
         balanceManagerData,
         currentManagerPlayCaps,
         refreshData: fetchAllData,
+        refreshPlayCaps,
         currentBalanceManagerCap,
         bmLoading,
         playCapLoading,

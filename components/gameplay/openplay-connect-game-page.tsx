@@ -1,6 +1,12 @@
 "use client";
-import { useEffect, useState } from 'react';
-import GameLauncher from "@/components/gameplay/game-launcher";
+import SessionExpiredCard from './session-expired-card';
+import OpenPlayConnectGame from './openplay-connect-game';
+import { useWalletAuth } from '../providers/wallet-auth-context-provider';
+import { useMemo } from 'react';
+import { useBalanceManager } from '../providers/balance-manager-provider';
+import FirstDepositCard from './first-deposit-card';
+import { useInvisibleWallet } from '../providers/invisible-wallet-provider';
+import LoaderCard from './loader-card';
 
 interface OpenPlayConnectGamePageProps {
     gameUrl: string;
@@ -9,47 +15,73 @@ interface OpenPlayConnectGamePageProps {
 }
 
 export default function OpenPlayConnectGamePage(props: OpenPlayConnectGamePageProps) {
+    // Calculate values based on network type
     const isMainnet = process.env.NEXT_PUBLIC_NETWORK === "mainnet";
     const baseOffset = isMainnet ? "72px" : "104px";
     const desktopHeight = `calc(100vh - ${baseOffset})`;
     const desktopMaxWidth = `calc((100vh - ${baseOffset}) * 4/3)`;
 
-    const [isMobile, setIsMobile] = useState(false);
 
-    useEffect(() => {
-        const handleResize = () => setIsMobile(window.innerWidth < 768);
-        handleResize();
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
+    const { isConnected, isLoading: isAuthLoading } = useWalletAuth();
+    const {
+        currentBalanceManager,
+        bmLoading,
+        playCapLoading
+    } = useBalanceManager();
+    const { activePlayCap, isLoading: isInvisWalletLoading } = useInvisibleWallet();
 
-    if (isMobile) {
-        // Mobile: full-screen overlay that covers the header and takes all available space.
-        return (
-            <div 
-                className="fixed top-0 left-0 w-full h-full z-50 flex justify-center items-center"
+    const content = useMemo(() => {
+        // First check if it's still loading
+        if (isAuthLoading || bmLoading || playCapLoading || isInvisWalletLoading) {
+            return <LoaderCard />;
+        }
+        // Early return if not connected
+        if (!isConnected) {
+            return <div />;
+        }
+        // First deposit
+        if (!currentBalanceManager) {
+            return <FirstDepositCard />;
+        }
+        // No play cap
+        if (!activePlayCap) {
+            return <SessionExpiredCard />;
+        }
+        // Gameplay
+        return <OpenPlayConnectGame gameUrl={props.gameUrl} houseId={props.houseId} />;
+    }, [activePlayCap, bmLoading, currentBalanceManager, isAuthLoading, isConnected, isInvisWalletLoading, playCapLoading, props.gameUrl, props.houseId]);
+
+    return (
+        <>
+            {/* Mobile Layout: visible on screens smaller than md */}
+            <div
+                className="md:hidden w-full flex justify-center items-center"
+                style={{ height: desktopHeight }}
             >
                 <div className="w-full h-full">
-                    <GameLauncher gameUrl={props.gameUrl} houseId={props.houseId} />
+                    {content}
                 </div>
             </div>
-        );
-    }
 
-    // Desktop: the original 4:3 aspect ratio container.
-    return (
-        <div 
-            className="flex w-full justify-center items-center"
-            style={{
-                height: desktopHeight,
-                backgroundImage: props.bgUrl ? `url(${props.bgUrl})` : undefined,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center'
-            }}
-        >
-            <div className="w-full aspect-[4/3] max-h-full" style={{ maxWidth: desktopMaxWidth }}>
-                <GameLauncher gameUrl={props.gameUrl} houseId={props.houseId} />
+            {/* Desktop Layout: visible on md and larger screens */}
+            <div
+                className="hidden md:flex w-full justify-center items-center"
+                style={{
+                    height: desktopHeight,
+                    backgroundImage: props.bgUrl ? `url(${props.bgUrl})` : undefined,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center'
+                }}
+            >
+                <div
+                    className="w-full aspect-[4/3] max-h-full p-4"
+                    style={{ maxWidth: desktopMaxWidth }}
+                >
+                    <div className="w-full h-full rounded-lg overflow-hidden">
+                        {content}
+                    </div>
+                </div>
             </div>
-        </div>
+        </>
     );
 }
