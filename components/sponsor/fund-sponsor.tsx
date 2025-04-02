@@ -1,7 +1,6 @@
 ﻿"use client"
 
 import {useCurrentAccount, useSignTransaction} from "@mysten/dapp-kit";
-import Wallet from "@/components/sui/wallet";
 import {Form, FormControl, FormField, FormItem, FormMessage} from "@/components/ui/form";
 import {Input} from "@/components/ui/input";
 import {Button} from "@/components/ui/button";
@@ -82,7 +81,6 @@ export default function FundSponsor(props: FundSponsorProps) {
 
     return (
         <div>
-            {!account && <Wallet/>}
             {account &&
                 <div>
                     <Form {...form}>
