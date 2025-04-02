@@ -17,16 +17,16 @@ export default function GamesPage() {
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8 max-w-4xl mx-auto">
                     <GameCardV2
-                        href="/games/poker"
+                        href="/piggy-bank"
                         src="/piggy-bank-thumbnail.png"
-                        alt="Poker"
+                        alt="Piggy Bank"
                         title="Piggy Bank"
                     />
                     <GameCardV2
-                        href="/games/slots"
+                        href="/coin-flip/sui-vs-sol"
                         src="/sui-vs-sol thumbnail.png"
-                        alt="Slots"
-                        title="Lucky Slots"
+                        alt="Sui vs Sol"
+                        title="Sui vs Sol"
                     />
                     <ComingSoonGameCard />
                 </div>

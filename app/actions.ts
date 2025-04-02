@@ -89,10 +89,10 @@ export async function signAndExecuteInvisWalletJsonTransaction(txJson: string, w
         if (!verifyTxData(tx)) {
             throw new Error("Invalid transaction data");
         }
-    
+
         logStep("Step 3: Retrieving wallet signer.");
         const signer = getShinamiWalletSigner(walletId);
-    
+
         logStep("Step 4: Building gasless transaction.");
         const gaslessTx = await buildGaslessTransaction(tx, { sui: getPriviligedSuiClient() });
 
@@ -225,6 +225,29 @@ export async function buildDepositToNewBalanceManagerTransaction(sender: string,
         });
         tx.transferObjects([play_cap], playCapDestination);
     }
+
+    tx.moveCall({
+        target: SHARE_BALANCE_MANAGER_FUNCTION_TARGET,
+        arguments: [
+            tx.object(balance_manager)
+        ],
+    });
+    tx.transferObjects([balance_manager_cap], sender);
+
+    tx.setSender(sender);
+    const bytes = await tx.build({
+        client: getSuiClient(),
+    });
+    return toBase64(bytes);
+}
+
+export async function buildCreateNewBalanceManagerTransaction(sender: string) {
+    const tx = new Transaction();
+
+    const [balance_manager, balance_manager_cap] = tx.moveCall({
+        target: NEW_BALANCE_MANAGER_FUNCTION_TARGET,
+        arguments: [],
+    });
 
     tx.moveCall({
         target: SHARE_BALANCE_MANAGER_FUNCTION_TARGET,

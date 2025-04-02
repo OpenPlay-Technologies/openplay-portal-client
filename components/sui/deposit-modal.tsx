@@ -23,7 +23,6 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { CheckCircle2 } from "lucide-react";
 import { useMobile } from "@/hooks/use-mobile";
-import Link from "next/link";
 import { formatSuiAmount } from "@/lib/utils";
 import { useSignTransaction, useCurrentAccount } from "@mysten/dapp-kit";
 import { useInvisibleWallet } from "../providers/invisible-wallet-provider";
@@ -36,6 +35,7 @@ import {
 } from "@/app/actions";
 import { Transaction } from "@mysten/sui/transactions";
 import { Loader } from "../ui/loader";
+import { useBalance } from "../providers/balance-provider";
 
 interface DepositModalProps {
     open: boolean;
@@ -58,9 +58,7 @@ export function DepositModal({ open, onOpenChange }: DepositModalProps) {
     const { mutate: signTransaction } = useSignTransaction();
     const {
         setSelectedBalanceManagerId,
-        refreshBalanceManagers,
-        refreshBalanceManagerCaps,
-        refreshPlayCaps,
+        refreshData,
         currentBalanceManager,
         currentBalanceManagerCap,
     } = useBalanceManager();
@@ -69,6 +67,7 @@ export function DepositModal({ open, onOpenChange }: DepositModalProps) {
         updatePlayCaps: updateInvisWalletPlayCaps,
         walletAddress: invisWalletAddress,
     } = useInvisibleWallet();
+    const {updateBalance} = useBalance();
 
     // Preset deposit amounts in SUI
     const presetAmounts = [1e9, 5e9, 10e9, 25e9, 50e9, 100e9];
@@ -152,11 +151,9 @@ export function DepositModal({ open, onOpenChange }: DepositModalProps) {
                                 setIsSubmitting(false);
                                 setIsSuccess(true);
                                 setLoading(false);
-
-                                refreshBalanceManagers();
-                                refreshBalanceManagerCaps();
-                                refreshPlayCaps();
+                                refreshData();
                                 updateInvisWalletPlayCaps();
+                                updateBalance();
                                 console.log(resp.objectChanges);
 
                                 const createdBm = resp.objectChanges?.find(
@@ -292,7 +289,7 @@ export function DepositModal({ open, onOpenChange }: DepositModalProps) {
                 <DrawerHeader>
                     <DrawerTitle>Deposit SUI</DrawerTitle>
                     <DrawerDescription>
-                        <span>Add funds to your balance</span>
+                        <span>Add funds to your balance manager.</span>
                     </DrawerDescription>
                     <Alert className="mt-4 bg-muted">
                         <AlertDescription>
@@ -310,10 +307,7 @@ export function DepositModal({ open, onOpenChange }: DepositModalProps) {
                 <DialogHeader>
                     <DialogTitle>Deposit SUI</DialogTitle>
                     <DialogDescription>
-                        Add funds to your balance.{" "}
-                        <Link href="/balance-manager" className="underline" onClick={() => onOpenChange(false)}>
-                            Learn more
-                        </Link>
+                        <span>Add funds to your balance manager.</span>
                     </DialogDescription>
                     <Alert className="mt-4 bg-muted">
                         <AlertDescription>

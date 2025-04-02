@@ -18,6 +18,9 @@ import {
 } from "@mysten/dapp-kit";
 import { Button } from "../ui/button";
 import { cn, formatAddress } from "@/lib/utils";
+import { DialogDescription } from "@radix-ui/react-dialog";
+import { useWalletAuth } from "../providers/wallet-auth-context-provider";
+import { Loader } from "../ui/loader";
 
 // Mock social providers
 const socialProviders = [
@@ -25,12 +28,7 @@ const socialProviders = [
     { id: "facebook", name: "Facebook", icon: "/zkLogin/facebook-logo.png" },
 ];
 
-interface WalletConnectModalProps {
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-}
-
-export function WalletConnect({ open, onOpenChange }: WalletConnectModalProps) {
+export function WalletConnectModal() {
     const isMobile = useMobile();
     const [step, setStep] = useState<"main" | "all-wallets" | "select-address" | "connected">("main");
     const [selectedWallet, setSelectedWallet] = useState<string | null>(null);
@@ -41,17 +39,19 @@ export function WalletConnect({ open, onOpenChange }: WalletConnectModalProps) {
     const { mutate: switchAccount } = useSwitchAccount();
     const wallet = useCurrentWallet();
 
+    const { modalOpen, setModalOpen, onWalletConnected } = useWalletAuth();
+
     const { mutate: connect, isPending, isSuccess, isError, error, reset } = useConnectWallet();
 
     // Reset state when dialog/drawer is closed
     useEffect(() => {
-        if (!open) {
+        if (!modalOpen) {
             setTimeout(() => {
                 setStep("main");
                 setSelectedWallet(null);
             }, 300);
         }
-    }, [open]);
+    }, [modalOpen]);
 
     const renderContent = () => (
         <div className="flex flex-col h-full">
@@ -78,6 +78,7 @@ export function WalletConnect({ open, onOpenChange }: WalletConnectModalProps) {
                                             {
                                                 onSuccess: () => {
                                                     setStep("connected");
+                                                    onWalletConnected();
                                                     reset();
                                                 }
                                             }
@@ -86,10 +87,7 @@ export function WalletConnect({ open, onOpenChange }: WalletConnectModalProps) {
                                 />
                             ))}
                             {isPending && (
-                                <Alert className="mb-4" variant="default">
-                                    <AlertTitle>Connection Pending</AlertTitle>
-                                    <AlertDescription>Accept the request in your wallet.</AlertDescription>
-                                </Alert>
+                                <Loader className="mt-4" title="Connection Pending" body="Accept the request in your wallet." />
                             )}
                             {isError && (
                                 <Alert className="mb-4" variant="destructive">
@@ -177,7 +175,7 @@ export function WalletConnect({ open, onOpenChange }: WalletConnectModalProps) {
                             Address: {currentAccount?.address ? formatAddress(currentAccount.address) : "Unknown"}
                         </p>
                     )}
-                    <Button onClick={() => onOpenChange(false)} className="mt-4">
+                    <Button onClick={() => setModalOpen(false)} className="mt-4">
                         Close
                     </Button>
                 </div>
@@ -187,7 +185,7 @@ export function WalletConnect({ open, onOpenChange }: WalletConnectModalProps) {
 
     if (isMobile) {
         return (
-            <Drawer open={open} onOpenChange={onOpenChange}>
+            <Drawer open={modalOpen} onOpenChange={setModalOpen}>
                 <DrawerContent className="px-6 pb-6">
                     <DrawerHeader className="px-0">
                         <DrawerTitle>Connect Wallet</DrawerTitle>
@@ -199,8 +197,11 @@ export function WalletConnect({ open, onOpenChange }: WalletConnectModalProps) {
     }
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
+        <Dialog open={modalOpen} onOpenChange={setModalOpen}>
             <DialogContent className="sm:max-w-[425px]">
+                <DialogDescription className="sr-only">
+                    Connect your Sui wallet to start using the OpenPlay protocol.
+                </DialogDescription>
                 <DialogHeader>
                     <DialogTitle>Connect Wallet</DialogTitle>
                 </DialogHeader>

@@ -41,7 +41,7 @@ export const BalanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
 export const useBalance = () => {
     const context = useContext(BalanceContext);
     if (!context) {
-        throw new Error('useEpoch must be used within a EpochProvider');
+        throw new Error('useBalance must be used within a BalanceProvider');
     }
     return context;
 }

@@ -11,6 +11,9 @@ import Footer from "@/components/nav/footer";
 import { BalanceManagerProvider } from "@/components/providers/balance-manager-provider";
 import { Analytics } from "@vercel/analytics/react"
 import { InvisibleWalletProvider } from '@/components/providers/invisible-wallet-provider';
+import { WalletAuthProvider } from '@/components/providers/wallet-auth-context-provider';
+import { DepositModalProvider } from '@/components/providers/deposit-modal-provider';
+import { WithdrawalModalProvider } from '@/components/providers/withdrawal-modal-provider';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -37,15 +40,21 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                     <SuiClientProviders>
                         <BalanceProvider>
                             <BalanceManagerProvider>
-                                    <InvisibleWalletProvider>
-                                        <div className={'flex flex-col min-h-screen'}>
-                                            <Header />
-                                            <main className={"relative flex-grow bg-muted/80"}>
-                                                {children}
-                                            </main>
-                                            <Footer />
-                                        </div>
-                                    </InvisibleWalletProvider>
+                                <InvisibleWalletProvider>
+                                    <DepositModalProvider>
+                                        <WithdrawalModalProvider>
+                                            <WalletAuthProvider>
+                                                <div className={'flex flex-col min-h-screen'}>
+                                                    <Header />
+                                                    <main className={"relative flex-grow bg-muted/80"}>
+                                                        {children}
+                                                    </main>
+                                                    <Footer />
+                                                </div>
+                                            </WalletAuthProvider>
+                                        </WithdrawalModalProvider>
+                                    </DepositModalProvider>
+                                </InvisibleWalletProvider>
                             </BalanceManagerProvider>
                         </BalanceProvider>
                     </SuiClientProviders>
@@ -53,6 +62,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <Toaster />
                 <Analytics debug={false} />
             </body>
-        </html>
+        </html >
     );
 }

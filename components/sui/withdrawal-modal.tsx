@@ -23,7 +23,6 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Slider } from "@/components/ui/slider"
 import { CheckCircle2, Wallet } from "lucide-react"
 import { useMobile } from "@/hooks/use-mobile"
-import Link from "next/link"
 import { cn, formatAddress, formatSuiAmount } from "@/lib/utils"
 
 // New imports to implement real withdrawal logic (similar to deposit modal)
@@ -33,6 +32,7 @@ import { useBalanceManager } from "../providers/balance-manager-provider"
 import { Transaction } from "@mysten/sui/transactions"
 import { buildWithdrawFromBalanceManagerTransaction, executeAndWaitForTransactionBlock } from "@/app/actions"
 import { Loader } from "../ui/loader"
+import { useBalance } from "../providers/balance-provider"
 
 interface WithdrawalModalProps {
     open: boolean
@@ -54,7 +54,8 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
     const { mutate: signTransaction } = useSignTransaction()
     const account = useCurrentAccount()
     const { walletAddress: invisWalletAddress, updatePlayCaps: updateInvisWalletPlayCaps } = useInvisibleWallet()
-    const { refreshBalanceManagers, refreshBalanceManagerCaps, refreshPlayCaps, currentBalanceManager, currentBalanceManagerCap } = useBalanceManager()
+    const { currentBalanceManager, currentBalanceManagerCap, refreshData } = useBalanceManager();
+    const {updateBalance} = useBalance();
 
     // Compute withdrawal amount based on slider percentage
     // const withdrawalAmount = currentBalanceManager ? Math.round(currentBalanceManager.balance * percentage / 100) : 0
@@ -111,11 +112,9 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
                             .then(() => {
                                 setIsSubmitting(false)
                                 setIsSuccess(true)
-                                // TODO: Add any refresh logic similar to deposit modal if necessary.
-                                refreshBalanceManagers()
-                                refreshBalanceManagerCaps()
-                                refreshPlayCaps()
-                                updateInvisWalletPlayCaps()
+                                updateBalance();
+                                refreshData();
+                                updateInvisWalletPlayCaps();
                             })
                             .catch((error) => {
                                 setIsSubmitting(false)
@@ -262,7 +261,7 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
                 <DrawerContent>
                     <DrawerHeader>
                         <DrawerTitle>Withdraw Funds</DrawerTitle>
-                        <DrawerDescription>Send SUI to your wallet</DrawerDescription>
+                        <DrawerDescription>Withdraw funds from your balance manager to your wallet.</DrawerDescription>
                         <Alert className="bg-muted/50">
                             <AlertDescription>
                                 Funds are automatically withdrawn to your connected wallet: {account ? formatAddress(account.address) : "Unknown"}
@@ -282,10 +281,7 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
                 <DialogHeader>
                     <DialogTitle>Withdraw Funds</DialogTitle>
                     <DialogDescription>
-                        Send SUI to your wallet.{" "}
-                        <Link href="/balance-manager" className="underline hover:text-primary" onClick={() => onOpenChange(false)}>
-                            Learn more
-                        </Link>
+                        Withdraw funds from your balance manager to your wallet.
                     </DialogDescription>
                     <Alert className="bg-muted/50">
                         <AlertDescription>
