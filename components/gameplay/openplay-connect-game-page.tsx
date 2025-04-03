@@ -6,7 +6,7 @@ import { useMemo } from 'react';
 import { useBalanceManager } from '../providers/balance-manager-provider';
 import FirstDepositCard from './first-deposit-card';
 import { useInvisibleWallet } from '../providers/invisible-wallet-provider';
-import LoaderCard from './loader-card';
+import LoaderCard from '../ui/loader-card';
 import { useAlert } from '../providers/alert-provider';
 
 interface OpenPlayConnectGamePageProps {

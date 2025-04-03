@@ -1,6 +1,4 @@
 ﻿"use server"
-
-import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { Transaction } from "@mysten/sui/transactions";
 import { getPriviligedSuiClient, getShinamiWalletSigner, getSuiClient } from "@/api/sui-client";
 import { toBase64 } from "@mysten/bcs";
@@ -13,17 +11,7 @@ import {
 } from "@/api/core-constants";
 import { buildGaslessTransaction } from "@shinami/clients/sui";
 
-export async function getSponsorAddress() {
-    const network = process.env.NEXT_PUBLIC_NETWORK as 'mainnet' | 'testnet' | 'devnet' | 'localnet';
-    if (network != "localnet") {
-        return null;
-    }
-    if (!process.env.LOCAL_GAS_STATION_PRIVATE_KEY) {
-        return null;
-    }
-    const keypair = Ed25519Keypair.fromSecretKey(process.env.LOCAL_GAS_STATION_PRIVATE_KEY);
-    return keypair.toSuiAddress();
-}
+
 
 
 // Validate the transaction
@@ -115,8 +103,6 @@ export async function TryCreateInvisWallet(walletId: string) {
     const signer = getShinamiWalletSigner(walletId);
     await signer.tryCreate();
 }
-
-
 
 export async function getInvisWalletAddress(walletId: string) {
 

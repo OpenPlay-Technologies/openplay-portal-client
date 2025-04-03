@@ -1,7 +1,7 @@
-import { ComingSoonGameCard } from "@/components/games/coming-soon-game-card";
-import { GameCardV2 } from "@/components/games/game-card-v2";
+import { ComingSoonGameCard } from "@/components/games-ui/coming-soon-game-card";
+import { GameCardV2 } from "@/components/games-ui/game-card-v2";
 import CollaborationCTA from "@/components/home/collaboration-cta";
-import Banner from "@/components/nav/banner";
+import Banner from "@/components/home/banner";
 import React from "react";
 
 
@@ -17,14 +17,14 @@ export default function GamesPage() {
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8 max-w-4xl mx-auto">
                     <GameCardV2
-                        href="/piggy-bank"
-                        src="/piggy-bank-thumbnail.png"
+                        href="/play/piggy-bank"
+                        src="/piggy-bank/piggy-bank-thumbnail.png"
                         alt="Piggy Bank"
                         title="Piggy Bank"
                     />
                     <GameCardV2
-                        href="/coin-flip/sui-vs-sol"
-                        src="/sui-vs-sol thumbnail.png"
+                        href="/play/sui-vs-sol"
+                        src="/sui-vs-sol/sui-vs-sol thumbnail.png"
                         alt="Sui vs Sol"
                         title="Sui vs Sol"
                     />

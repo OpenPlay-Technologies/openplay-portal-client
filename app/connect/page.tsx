@@ -1,4 +1,4 @@
-import ConnectPage from "@/components/sui/connect-page";
+import ConnectPage from "@/components/wallet/connect-page";
 import { Suspense } from "react";
 
 export default function Page() {

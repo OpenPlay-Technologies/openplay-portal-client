@@ -11,7 +11,7 @@ import React, {
 } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAutoConnectWallet, useCurrentAccount } from '@mysten/dapp-kit';
-import { WalletConnectModal } from '../sui/wallet-conect-modal';
+import { WalletConnectModal } from '../wallet/wallet-conect-modal';
 
 interface WalletAuthContextProps {
     isConnected: boolean;

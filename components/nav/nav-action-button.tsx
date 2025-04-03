@@ -8,7 +8,7 @@ import { formatSuiAmount } from "@/lib/utils";
 import { useDepositModal } from "../providers/deposit-modal-provider";
 import { useWalletAuth } from "../providers/wallet-auth-context-provider";
 
-export function DepositActionButton() {
+export function NavActionButton() {
 
     const account = useCurrentAccount();
     const { currentBalanceManager, bmLoading } = useBalanceManager();

@@ -5,7 +5,6 @@ import Header from '@/components/nav/header';
 import React from 'react';
 import SuiClientProviders from "@/components/providers/sui-client-providers";
 import { BalanceProvider } from "@/components/providers/balance-provider";
-import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import Footer from "@/components/nav/footer";
 import { BalanceManagerProvider } from "@/components/providers/balance-manager-provider";
@@ -62,7 +61,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                         </BalanceProvider>
                     </SuiClientProviders>
                 </ThemeProvider>
-                <Toaster />
                 <Analytics debug={false} />
             </body>
         </html >

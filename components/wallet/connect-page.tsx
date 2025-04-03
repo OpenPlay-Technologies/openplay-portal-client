@@ -4,7 +4,7 @@
 import { useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useWalletAuth } from '@/components/providers/wallet-auth-context-provider';
-import WalletConnectCard from '@/components/sui/wallet-connect-card';
+import WalletConnectCard from '@/components/wallet/wallet-connect-card';
 import { Loader } from '@/components/ui/loader';
 
 export default function ConnectPage() {

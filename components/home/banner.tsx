@@ -41,11 +41,11 @@ export default function Banner() {
                         ref={videoRef}
                         onLoadedData={playVideo}
                         className="absolute top-0 left-0 w-full h-full object-cover pointer-events-none z-0"
-                        src="/banner-video.mp4"
+                        src="/banner/banner-video.mp4"
                         loop
                         muted
                         playsInline
-                        poster="/banner-poster-min.webp"
+                        poster="/banner/banner-poster-min.webp"
                     ></video>
                 ) : (
                     // If the video can't play, show the poster image as a background.

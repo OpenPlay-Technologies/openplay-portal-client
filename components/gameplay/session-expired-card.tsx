@@ -6,7 +6,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { useCurrentAccount, useSignTransaction } from "@mysten/dapp-kit"
 import { useBalanceManager } from "../providers/balance-manager-provider"
 import { useInvisibleWallet } from "../providers/invisible-wallet-provider"
-import { buildMintPlayCapTransaction } from "@/app/coin-flip/actions"
+import { buildMintPlayCapTransaction } from "@/app/play/[gameUrlName]/actions"
 import { Transaction } from "@mysten/sui/transactions"
 import { executeAndWaitForTransactionBlock } from "@/app/actions"
 

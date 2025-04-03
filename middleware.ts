@@ -6,7 +6,7 @@ export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // Define routes that need a wallet connection
-  const protectedRoutes = ['/balance-manager', '/piggy-bank', '/coin-flip/sui-vs-sol'];
+  const protectedRoutes = ['/balance-manager', '/play'];
   const isProtected = protectedRoutes.some((route) => pathname.startsWith(route));
 
   // If not a protected route, continue.
@@ -30,5 +30,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/:path*'],
+  matcher: ['/play/:path*'],
 };

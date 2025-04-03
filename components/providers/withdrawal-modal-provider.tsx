@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode } from "react";
-import { WithdrawalModal } from "../sui/withdrawal-modal";
+import { WithdrawalModal } from "../withdrawal/withdrawal-modal";
 
 interface WithdrawalModalContextType {
   openWithdrawalModal: () => void;

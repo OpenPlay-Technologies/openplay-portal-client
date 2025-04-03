@@ -10,7 +10,7 @@ type GameCardProps = {
 
 export function GameCardV2({ href, src, alt, title }: GameCardProps) {
     return (
-        <Link href={href} className="group block focus:outline-none">
+        <Link href={href} className="group block focus:outline-none" prefetch>
             <div
                 className="rounded-lg overflow-hidden border border-border bg-card shadow-sm transition-all duration-300 ease-in-out 
         md:group-hover:scale-105 md:group-hover:shadow-xl md:group-hover:border-primary/30 

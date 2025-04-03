@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode } from "react";
-import { DepositModal } from "../sui/deposit-modal";
+import { DepositModal } from "../deposit/deposit-modal";
 
 interface DepositModalContextType {
   openDepositModal: () => void;

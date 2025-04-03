@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
             // In Next.js the config.externals might be an array or a function.
             // We’ll prepend a function that checks for 'node-fetch' requests.
             if (Array.isArray(config.externals)) {
-                // @ts-ignore
+                // @ts-expect-error idk
                 config.externals.unshift((context, request, callback) => {
                     if (request === 'node-fetch') {
                         // Tell webpack that "node-fetch" should be treated as a CommonJS module.

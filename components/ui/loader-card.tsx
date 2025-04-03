@@ -1,7 +1,7 @@
 "use client"
 
 import { Card } from "@/components/ui/card"
-import { Loader } from "../ui/loader"
+import { Loader } from "./loader"
 
 
 export default function LoaderCard() {
