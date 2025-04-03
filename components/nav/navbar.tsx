@@ -22,7 +22,7 @@ export default function Navbar() {
 
 
     return (
-        <div className="px-4 flex flex-row justify-between items-center h-[72px]">
+        <div className="px-4 flex flex-row justify-between items-center h-[72px] max-w-screen-lg mx-auto">
             {/*Logo*/}
             {
                 loading ?
