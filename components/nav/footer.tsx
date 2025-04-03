@@ -1,4 +1,5 @@
 ﻿import Link from "next/link"
+import { ThemeSwitcher } from "../ui/theme-switcher";
 
 export default function Footer() {
     return (
@@ -39,6 +40,9 @@ export default function Footer() {
                                 <span className="sr-only">Discord</span>
                             </Link>
                         </div>
+                    </div>
+                    <div className="flex items-center justify-center">
+                        <ThemeSwitcher />
                     </div>
                 </div>
                 <div className="mt-12 pt-8 border-t border-muted-foreground/20 text-center text-sm text-muted-foreground">

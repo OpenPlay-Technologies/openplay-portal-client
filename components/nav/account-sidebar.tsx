@@ -156,33 +156,33 @@ export default function AccountSidebar() {
                                     </Button>
                                 </li> */}
                             <li>
-                                <Button variant="ghost" className="w-full justify-start gap-3 h-12">
+                                <Button disabled variant="ghost" className="w-full justify-start gap-3 h-12">
                                     <Users className="h-5 w-5" />
-                                    <span>Referrals</span>
+                                    <span>Referrals (Coming Soon)</span>
                                 </Button>
                             </li>
                             <li>
-                                <Button variant="ghost" className="w-full justify-start gap-3 h-12">
-                                    <History className="h-5 w-5" />
-                                    <span>Transaction History</span>
-                                </Button>
-                            </li>
-                            <li>
-                                <Button variant="ghost" className="w-full justify-start gap-3 h-12">
+                                <Button disabled variant="ghost" className="w-full justify-start gap-3 h-12">
                                     <RefreshCw className="h-5 w-5" />
-                                    <span>Free Spins</span>
+                                    <span>Free Spins (Coming Soon)</span>
                                 </Button>
                             </li>
                             <li>
-                                <Button variant="ghost" className="w-full justify-start gap-3 h-12">
+                                <Button disabled variant="ghost" className="w-full justify-start gap-3 h-12">
                                     <Gift className="h-5 w-5" />
-                                    <span>Bonuses</span>
+                                    <span>Bonuses (Coming Soon)</span>
                                 </Button>
                             </li>
                             <li>
-                                <Button variant="ghost" className="w-full justify-start gap-3 h-12">
+                                <Button disabled variant="ghost" className="w-full justify-start gap-3 h-12">
+                                    <History className="h-5 w-5" />
+                                    <span>Transaction History (Coming Soon)</span>
+                                </Button>
+                            </li>
+                            <li>
+                                <Button disabled variant="ghost" className="w-full justify-start gap-3 h-12">
                                     <LifeBuoy className="h-5 w-5" />
-                                    <span>Responsible Gaming</span>
+                                    <span>Responsible Gaming (Coming Soon)</span>
                                 </Button>
                             </li>
 

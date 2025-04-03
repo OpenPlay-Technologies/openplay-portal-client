@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Check, ChevronRight } from "lucide-react";
+import { Check, ChevronRight, Frown } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Separator } from "@/components/ui/separator";
@@ -21,6 +21,7 @@ import { cn, formatAddress } from "@/lib/utils";
 import { DialogDescription } from "@radix-ui/react-dialog";
 import { useWalletAuth } from "../providers/wallet-auth-context-provider";
 import { Loader } from "../ui/loader";
+import Link from "next/link";
 
 // Mock social providers
 const socialProviders = [
@@ -66,6 +67,22 @@ export function WalletConnectModal() {
                     </Alert>
 
                     <div className="space-y-6">
+                        { wallets.length === 0 &&
+                            <div className={"flex flex-col items-center justify-center space-y-4 p-4 text-center"}>
+                                <Frown className={"text-primary h-6 w-6"} aria-hidden="true" />
+                                <div className="space-y-2">
+                                    <h3 className="text-lg font-medium">No Compatible Wallets Found!</h3>
+                                    <p className="text-sm text-muted-foreground">
+                                        Please install a wallet to connect.
+                                    </p>
+                                    <Link href="https://suiwallet.com/" target="_blank" rel="noopener noreferrer">
+                                        <Button variant="accent" className="mt-4">
+                                            Get Sui Wallet
+                                        </Button>
+                                    </Link>
+                                </div>
+                            </div>
+                        }
                         <div className="space-y-3">
                             {wallets.map((wallet) => (
                                 <WalletOption
