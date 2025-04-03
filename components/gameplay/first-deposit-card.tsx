@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { useDepositModal } from "../providers/deposit-modal-provider"
+import Link from "next/link"
 
 
 export default function FirstDepositCard() {
@@ -23,6 +24,7 @@ export default function FirstDepositCard() {
                 <CardContent className="flex-grow flex flex-col justify-center space-y-3 pb-6">
                     <p className="text-muted-foreground text-center md:text-left">You need to have a balance manager to start playing the game.</p>
                     <p className="text-muted-foreground text-center md:text-left">Make your first deposit to continue.</p>
+                    <Link href={"/balance-manager"}><p className="text-muted-foreground text-center md:text-left underline">Learn More</p></Link>
                 </CardContent>
                 <CardFooter className="flex flex-col space-y-3 pt-2 pb-8 md:pb-6">
                     <Button

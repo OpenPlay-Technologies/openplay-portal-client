@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertCircle, CheckCircle2, Plus, Wallet, ArrowDownToLine, PlusCircle, ArrowUpFromLine } from "lucide-react";
+import { AlertCircle, CheckCircle2, Plus, Wallet, ArrowDownToLine, PlusCircle, ArrowUpFromLine, Play } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { useBalanceManager } from "@/components/providers/balance-manager-provider";
@@ -15,6 +15,7 @@ import { useState } from "react";
 import { buildCreateNewBalanceManagerTransaction, executeAndWaitForTransactionBlock } from "../actions";
 import { useDepositModal } from "@/components/providers/deposit-modal-provider";
 import { useWithdrawalModal } from "@/components/providers/withdrawal-modal-provider";
+import Link from "next/link";
 
 export default function BalanceManagerPage() {
   const {
@@ -173,17 +174,34 @@ export default function BalanceManagerPage() {
                     </div>
                     <div className="border-t bg-muted/10 p-3 md:p-4 flex flex-col sm:flex-row gap-2 md:gap-3 justify-end">
                       <Button variant="accent" className="flex items-center gap-2" onClick={() => openDepositModal()}>
-                        <ArrowDownToLine className="h-4 w-4" />
-                        Deposit
+                        <ArrowDownToLine className="h-4 w-4" /> Deposit
                       </Button>
                       <Button variant="outline" className="flex items-center gap-2" onClick={() => openWithdrawalModal()}>
-                        <ArrowUpFromLine className="h-4 w-4" />
-                        Withdraw
+                        <ArrowUpFromLine className="h-4 w-4" /> Withdraw
                       </Button>
                     </div>
                   </div>
                 )}
               </CardContent>
+              <CardFooter className="bg-muted p-4 rounded-b-lg shadow">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <p className="text-sm font-semibold text-foreground">
+                    Ready to go?
+                  </p>
+                  <Link href={"/"}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center gap-1 h-8 px-4"
+                    >
+                      <Play className="mr-1 h-3.5 w-3.5" />
+                      Start Playing
+                    </Button>
+                  </Link>
+                </div>
+              </CardFooter>
+
+
             </Card>
 
             <div className="grid md:grid-cols-3 gap-6 md:gap-8">

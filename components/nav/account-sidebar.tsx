@@ -114,7 +114,7 @@ export default function AccountSidebar() {
                                             className="flex items-center text-xs text-muted-foreground hover:text-primary transition-colors"
                                             onClick={closeSheet}
                                         >
-                                            <span>See Details</span>
+                                            <span>See More</span>
                                             <ArrowUpRight className="ml-1 h-3 w-3" />
                                         </Link>
                                     </div>

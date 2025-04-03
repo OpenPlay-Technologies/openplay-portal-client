@@ -7,6 +7,7 @@ import { useBalanceManager } from '../providers/balance-manager-provider';
 import FirstDepositCard from './first-deposit-card';
 import { useInvisibleWallet } from '../providers/invisible-wallet-provider';
 import LoaderCard from './loader-card';
+import { useAlert } from '../providers/alert-provider';
 
 interface OpenPlayConnectGamePageProps {
     gameUrl: string;
@@ -16,8 +17,10 @@ interface OpenPlayConnectGamePageProps {
 
 export default function OpenPlayConnectGamePage(props: OpenPlayConnectGamePageProps) {
     // Calculate values based on network type
-    const isMainnet = process.env.NEXT_PUBLIC_NETWORK === "mainnet";
-    const baseOffset = isMainnet ? "72px" : "104px";
+
+    const {alertHeight} = useAlert();
+
+    const baseOffset = (72 + alertHeight) + "px"; // Header + Footer + Alert height
     const desktopHeight = `calc(100vh - ${baseOffset})`;
     const desktopMaxWidth = `calc((100vh - ${baseOffset}) * 4/3)`;
 

@@ -13,8 +13,8 @@ export function GameCardV2({ href, src, alt, title }: GameCardProps) {
         <Link href={href} className="group block focus:outline-none">
             <div
                 className="rounded-lg overflow-hidden border border-border bg-card shadow-sm transition-all duration-300 ease-in-out 
-                group-hover:scale-105 group-hover:shadow-xl group-hover:border-primary/30 
-                dark:bg-card dark:border-border dark:group-hover:border-primary/30 dark:shadow-none dark:group-hover:shadow-lg dark:group-hover:shadow-primary/5"
+        md:group-hover:scale-105 md:group-hover:shadow-xl md:group-hover:border-primary/30 
+        dark:bg-card dark:border-border md:dark:group-hover:border-primary/30 dark:shadow-none md:dark:group-hover:shadow-lg md:dark:group-hover:shadow-primary/5"
             >
                 <div className="relative aspect-square w-full overflow-hidden">
                     <Image
@@ -25,12 +25,13 @@ export function GameCardV2({ href, src, alt, title }: GameCardProps) {
                     />
                 </div>
                 <div className="p-4 text-center">
-                    <h3 className="text-2xl font-bold text-foreground group-hover:text-primary transition-colors duration-300">
+                    <h3 className="text-2xl font-bold text-foreground group-hover:text-primary md:group-hover:text-primary transition-colors duration-300">
                         {title}
                     </h3>
                 </div>
             </div>
         </Link>
+
     )
 }
 

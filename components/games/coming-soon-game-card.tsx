@@ -4,9 +4,9 @@ export function ComingSoonGameCard() {
   return (
     <div className="group block">
       <div
-        className="rounded-lg overflow-hidden border border-border bg-card/50 shadow-sm transition-all duration-300 ease-in-out 
-        group-hover:scale-105 group-hover:shadow-xl group-hover:border-primary/30 
-        dark:bg-card/50 dark:border-border dark:group-hover:border-primary/30 dark:shadow-none dark:group-hover:shadow-lg dark:group-hover:shadow-primary/5"
+        className="rounded-lg overflow-hidden border border-border bg-card shadow-sm transition-all duration-300 ease-in-out 
+        md:group-hover:scale-105 md:group-hover:shadow-xl md:group-hover:border-primary/30 
+        dark:bg-card dark:border-border md:dark:group-hover:border-primary/30 dark:shadow-none md:dark:group-hover:shadow-lg md:dark:group-hover:shadow-primary/5"
       >
         <div className="relative aspect-square w-full overflow-hidden bg-muted/30 flex items-center justify-center">
           <div className="absolute inset-0 flex items-center justify-center">

@@ -14,6 +14,7 @@ import { InvisibleWalletProvider } from '@/components/providers/invisible-wallet
 import { WalletAuthProvider } from '@/components/providers/wallet-auth-context-provider';
 import { DepositModalProvider } from '@/components/providers/deposit-modal-provider';
 import { WithdrawalModalProvider } from '@/components/providers/withdrawal-modal-provider';
+import { AlertProvider } from '@/components/providers/alert-provider';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -44,13 +45,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                                     <DepositModalProvider>
                                         <WithdrawalModalProvider>
                                             <WalletAuthProvider>
-                                                <div className={'flex flex-col min-h-screen'}>
-                                                    <Header />
-                                                    <main className={"relative flex-grow bg-muted/80"}>
-                                                        {children}
-                                                    </main>
-                                                    <Footer />
-                                                </div>
+                                                <AlertProvider>
+                                                    <div className={'flex flex-col min-h-screen'}>
+                                                        <Header />
+                                                        <main className={"relative flex-grow bg-muted/80"}>
+                                                            {children}
+                                                        </main>
+                                                        <Footer />
+                                                    </div>
+                                                </AlertProvider>
                                             </WalletAuthProvider>
                                         </WithdrawalModalProvider>
                                     </DepositModalProvider>

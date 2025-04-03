@@ -65,7 +65,7 @@ export default function Banner() {
                     </h1>
                     <p className="text-sm md:text-lg lg:text-xl max-w-3xl mx-auto text-white">
                         Openplay is redefining gambling: Fair, transparent, and secure.
-                        <br className="hidden md:block" />
+                        <br/>
                         Powered by Sui blockchain.
                     </p>
                 </div>
