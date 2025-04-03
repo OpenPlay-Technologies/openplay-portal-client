@@ -23,7 +23,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { CheckCircle2 } from "lucide-react";
 import { useMobile } from "@/hooks/use-mobile";
-import { formatSuiAmount } from "@/lib/utils";
+import { cn, formatSuiAmount } from "@/lib/utils";
 import { useSignTransaction, useCurrentAccount } from "@mysten/dapp-kit";
 import { useInvisibleWallet } from "../providers/invisible-wallet-provider";
 import { useBalanceManager } from "../providers/balance-manager-provider";
@@ -49,6 +49,7 @@ export function DepositModal({ open, onOpenChange }: DepositModalProps) {
     const [customAmount, setCustomAmount] = useState<number | undefined>();
     const [isSuccess, setIsSuccess] = useState(false);
     const [errorMsg, setErrorMsg] = useState<string | undefined>();
+    const [inputError, setInputError] = useState<string | undefined>();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [loading, setLoading] = useState(false);
     const [signing, setSigning] = useState(false);
@@ -67,7 +68,7 @@ export function DepositModal({ open, onOpenChange }: DepositModalProps) {
         updatePlayCaps: updateInvisWalletPlayCaps,
         walletAddress: invisWalletAddress,
     } = useInvisibleWallet();
-    const {updateBalance} = useBalance();
+    const {updateBalance, balance} = useBalance();
 
     // Preset deposit amounts in SUI
     const presetAmounts = [1e9, 5e9, 10e9, 25e9, 50e9, 100e9];
@@ -81,6 +82,7 @@ export function DepositModal({ open, onOpenChange }: DepositModalProps) {
         setErrorMsg(undefined);
         setIsSubmitting(false);
         setSigning(false);
+        setInputError(undefined);
     }, [open]);
 
     // Close handler for successful deposit
@@ -93,6 +95,7 @@ export function DepositModal({ open, onOpenChange }: DepositModalProps) {
 
     // Deposit submission handler
     async function handleDeposit() {
+        setInputError(undefined);
         setLoading(true);
         setIsSubmitting(false);
         setSigning(false);
@@ -112,6 +115,13 @@ export function DepositModal({ open, onOpenChange }: DepositModalProps) {
                 setLoading(false);
                 return;
             }
+
+            if (depositAmount > balance) {
+                setInputError("Insufficient balance");
+                setLoading(false);
+                return;
+            }
+
 
             let bytes;
             if (currentBalanceManager && currentBalanceManagerCap) {
@@ -212,6 +222,7 @@ export function DepositModal({ open, onOpenChange }: DepositModalProps) {
             {!isSuccess ? (
                 <>
                     <div className="space-y-4 py-4">
+                        <p className="text-sm">Wallet Balance: {formatSuiAmount(balance)}</p>
                         <div className="grid grid-cols-3 gap-2">
                             {presetAmounts.map((preset) => (
                                 <Button
@@ -222,6 +233,7 @@ export function DepositModal({ open, onOpenChange }: DepositModalProps) {
                                         setCustomAmount(undefined);
                                     }}
                                     className="w-full"
+                                    disabled={preset > balance}
                                 >
                                     {formatSuiAmount(preset, 0)}
                                 </Button>
@@ -234,10 +246,11 @@ export function DepositModal({ open, onOpenChange }: DepositModalProps) {
                                         value={inputValue}
                                         onChange={handleChange}
                                         placeholder="Enter amount"
-                                        className="flex-1"
+                                        className={cn("flex-1", inputError && "border-red-500")}
                                     />
                                     <span className="ml-2">SUI</span>
                                 </div>
+                                {inputError && <p className="text-red-500 text-sm mt-2">{inputError}</p>}
                             </div>
                         </div>
 

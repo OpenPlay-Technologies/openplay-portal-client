@@ -28,7 +28,7 @@ export default function Footer() {
                                 className="text-muted-foreground hover:text-primary transition-colors"
                             >
                                 <TelegramIcon />
-                                <span className="sr-only">Discord</span>
+                                <span className="sr-only">Telegram</span>
                             </Link>
                             <Link
                                 href="https://discord.gg/JF2grat2rZ"
@@ -41,8 +41,23 @@ export default function Footer() {
                             </Link>
                         </div>
                     </div>
-                    <div className="flex items-center justify-center">
+                    <div className="flex flex-col items-center justify-center">
                         <ThemeSwitcher />
+                        {/* Subtle Links Section
+                        <div className="mt-4 space-x-4">
+                        <Link
+                                href="/houses"
+                                className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                            >
+                                Houses
+                            </Link>
+                            <Link
+                                href="/rewards"
+                                className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                            >
+                                Positions
+                            </Link>
+                        </div> */}
                     </div>
                 </div>
                 <div className="mt-12 pt-8 border-t border-muted-foreground/20 text-center text-sm text-muted-foreground">
