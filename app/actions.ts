@@ -10,6 +10,7 @@ import {
     WITHDRAW_BALANCE_MANAGER_FUNCTION_TARGET
 } from "@/api/core-constants";
 import { buildGaslessTransaction } from "@shinami/clients/sui";
+import { SuiTransactionBlockResponse } from "@mysten/sui/client";
 
 
 
@@ -61,8 +62,13 @@ function verifyTxData(_transaction: Transaction): boolean {
     return true;
 }
 
+interface signAndExecuteInvisWalletJsonTransactionResponse {
+    result?: SuiTransactionBlockResponse;
+    isSuccessful: boolean;
+    errorMsg: string;
+}
 
-export async function signAndExecuteInvisWalletJsonTransaction(txJson: string, walletId: string) {
+export async function signAndExecuteInvisWalletJsonTransaction(txJson: string, walletId: string): Promise<signAndExecuteInvisWalletJsonTransactionResponse> {
     // Start the timer
     const startTime = Date.now();
     const logStep = (message: string) => {
@@ -90,12 +96,33 @@ export async function signAndExecuteInvisWalletJsonTransaction(txJson: string, w
             showEffects: true,
         });
         logStep("Transaction executed successfully.");
-        return result;
+        return {
+            result,
+            isSuccessful: true,
+            errorMsg: ""
+        }
     }
     catch (error) {
         logStep("Error signing and executing transaction.");
-        console.error(error);
-        throw new Error("Error signing and executing transaction: " + error);
+        let errorMsg = "Unknown error";
+
+        if (error instanceof Error) {
+            errorMsg = error.message;
+
+            // Check if error.data.details exists
+            if (typeof error === "object" && error !== null && "data" in error && "details" in (error as { data: { details: string } }).data) {
+                if (typeof error.data === "object" && error.data !== null && "details" in error.data) {
+                    errorMsg = (error.data as { details: string }).details;
+                }
+            }
+        }
+
+        console.log(JSON.stringify(error, null, 2));
+        return {
+            result: undefined,
+            isSuccessful: false,
+            errorMsg: errorMsg
+        }
     }
 }
 

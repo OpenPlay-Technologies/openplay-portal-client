@@ -1,4 +1,4 @@
-import { INIT_RESPONSE, isMessage, Message, TX_SIGN_AND_EXECUTE_REQUEST, TX_SIGN_AND_EXECUTE_RESPONSE } from "./messages";
+import { CLOSE_GAME_REQUEST, INIT_RESPONSE, isMessage, Message, TX_SIGN_AND_EXECUTE_REQUEST, TX_SIGN_AND_EXECUTE_RESPONSE } from "./messages";
 import { signAndExecuteInvisWalletJsonTransaction } from "@/app/actions";
 
 // Define the message event listener
@@ -24,6 +24,10 @@ export function handleMessage(event: MessageEvent, walletId: string) {
                 console.error("Init failed:", data.errorMsg);
             }
             break;
+        case CLOSE_GAME_REQUEST:
+            // Go BAck
+            window.history.back();
+            break;
         default:
             // Unknown message type; no action.
             break;
@@ -38,13 +42,17 @@ async function handleSignRequest(targetWindow: Window, data: Message, walletId: 
     try {
 
         const result = await signAndExecuteInvisWalletJsonTransaction(data.txJson, walletId);
+        if (!result.isSuccessful || !result.result) {
+            console.error("Transaction execution failed:", result.errorMsg);
+            throw new Error(result.errorMsg || "Transaction execution failed");
+        }
 
         console.log("Transaction Result:", result);
 
         const postMessage: Message = {
             type: TX_SIGN_AND_EXECUTE_RESPONSE,
             requestId: data.request_id,
-            result: result,
+            result: result.result,
             isSuccessful: true,
         };
         targetWindow.postMessage(postMessage, "*");
