@@ -2,7 +2,7 @@
 import SessionExpiredCard from './session-expired-card';
 import OpenPlayConnectGame from './openplay-connect-game';
 import { useWalletAuth } from '../providers/wallet-auth-context-provider';
-import { useMemo, useRef, useEffect } from 'react';
+import { useMemo, useRef } from 'react';
 import { useBalanceManager } from '../providers/balance-manager-provider';
 import FirstDepositCard from './first-deposit-card';
 import { useInvisibleWallet } from '../providers/invisible-wallet-provider';
