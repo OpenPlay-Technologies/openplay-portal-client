@@ -1,10 +1,9 @@
+import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 import { CLOSE_GAME_REQUEST, INIT_RESPONSE, isMessage, Message, TX_SIGN_AND_EXECUTE_REQUEST, TX_SIGN_AND_EXECUTE_RESPONSE } from "./messages";
 import { signAndExecuteInvisWalletJsonTransaction } from "@/app/actions";
 
 // Define the message event listener
-export function handleMessage(event: MessageEvent, walletId: string) {
-    console.log("Received message from origin:", event.origin);
-    console.log("Received message:", event.data);
+export function handleMessage(event: MessageEvent, router: AppRouterInstance, walletId: string) {
 
     if (!isMessage(event.data)) return;
     const data = event.data;
@@ -26,7 +25,7 @@ export function handleMessage(event: MessageEvent, walletId: string) {
             break;
         case CLOSE_GAME_REQUEST:
             // Go BAck
-            window.history.back();
+            router.back();
             break;
         default:
             // Unknown message type; no action.

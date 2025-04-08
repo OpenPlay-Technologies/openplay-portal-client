@@ -4,6 +4,7 @@ import { INIT_REQUEST } from "@/openplay-connect/messages";
 import { handleMessage } from "@/openplay-connect/listener";
 import { useBalanceManager } from "../providers/balance-manager-provider";
 import { useInvisibleWallet } from "../providers/invisible-wallet-provider";
+import { useRouter } from "next/navigation";
 
 interface OpenPlayConnectGameProps {
     houseId: string;
@@ -12,6 +13,7 @@ interface OpenPlayConnectGameProps {
 
 export default function OpenPlayConnectGame(props: OpenPlayConnectGameProps) {
     const iframeRef = useRef<HTMLIFrameElement>(null);
+    const router = useRouter();
     // const { keypair, activePlayCap } = useKeypair();
     const { walletId, activePlayCap } = useInvisibleWallet();
     const {
@@ -21,9 +23,9 @@ export default function OpenPlayConnectGame(props: OpenPlayConnectGameProps) {
     // Define a stable callback to avoid re-attaching the listener
     const messageHandler = useCallback((event: MessageEvent) => {
         if (walletId) {
-            handleMessage(event, walletId);
+            handleMessage(event, router, walletId);
         }
-    }, [walletId]);
+    }, [walletId, router]);
 
     useEffect(() => {
         if (!walletId || !activePlayCap || !selectedBalanceManagerId) return;
