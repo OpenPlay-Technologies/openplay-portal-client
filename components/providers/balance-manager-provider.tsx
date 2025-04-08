@@ -190,32 +190,48 @@ export const BalanceManagerProvider: React.FC<{ children: React.ReactNode }> = (
             return;
         }
 
+        // Add a loading guard to prevent repeated fetch calls
+        if (bmLoading) {
+            if (debug) console.log("fetchAllData: Already loading, skipping duplicate fetch");
+            return;
+        }
+
         setBmLoading(true);
         setError(null);
 
         try {
             if (debug) console.log("fetchAllData: Starting data fetch for account:", accountAddress);
 
-            // Step 1: Fetch caps
+            // Step 1: Fetch caps with better error handling
             const caps = await fetchCaps();
+
+            // Log the actual caps response for debugging
+            if (debug) console.log("fetchAllData: Caps fetched:", caps.length, caps);
 
             // Step 2: If we have caps, fetch managers
             if (caps.length > 0) {
                 const managers = await fetchManagers(caps);
+
+                // Log the actual managers response
+                if (debug) console.log("fetchAllData: Managers fetched:", managers.length, managers);
 
                 // Step 3: If we don't have a selected manager but have managers, select the first one
                 if (managers.length > 0) {
                     if (!selectedBalanceManagerId ||
                         !managers.some(manager => manager.id.id === selectedBalanceManagerId)) {
                         // Either no manager selected or the selected one is not in the list
-                        setSelectedBalanceManagerId(managers[0].id.id);
+                        const newManagerId = managers[0].id.id;
+                        if (debug) console.log("fetchAllData: Setting new manager ID:", newManagerId);
+                        setSelectedBalanceManagerId(newManagerId);
                     }
                 } else {
                     // No managers found, clear selection
+                    if (debug) console.log("fetchAllData: No managers found, clearing selection");
                     setSelectedBalanceManagerId(null);
                 }
             } else {
                 // No caps found, clear managers and selection
+                if (debug) console.log("fetchAllData: No caps found, clearing data");
                 setBalanceManagerData([]);
                 setSelectedBalanceManagerId(null);
             }
@@ -228,7 +244,7 @@ export const BalanceManagerProvider: React.FC<{ children: React.ReactNode }> = (
             setBmLoading(false);
             setHasInitialized(true);
         }
-    }, [accountAddress, fetchCaps, fetchManagers, selectedBalanceManagerId]);
+    }, [accountAddress, fetchCaps, fetchManagers, selectedBalanceManagerId, bmLoading]);
 
     // Detect account address changes
     useEffect(() => {
