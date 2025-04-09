@@ -117,6 +117,15 @@ export default function OpenPlayConnectGamePage(props: OpenPlayConnectGamePagePr
         return <OpenPlayConnectGame gameUrl={props.gameUrl} houseId={props.houseId} />;
     }, [activePlayCap, bmLoading, currentBalanceManager, isAuthLoading, isConnected, isInvisWalletLoading, playCapLoading, props.gameUrl, props.houseId]);
 
+    const gameLaunched =
+        !isAuthLoading &&
+        !bmLoading &&
+        !playCapLoading &&
+        !isInvisWalletLoading &&
+        isConnected &&
+        currentBalanceManager &&
+        activePlayCap
+
     return (
         <div
             ref={containerRef}
@@ -130,7 +139,12 @@ export default function OpenPlayConnectGamePage(props: OpenPlayConnectGamePagePr
         >
             {/* Single container with responsive styling */}
             <div
-                className="fixed z-50 inset-0 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] w-full h-full md:static md:h-auto md:aspect-[4/3] md:max-h-full md:p-4"
+                // On mobile, if the game is launched, we apply fixed positioning with inset-0 and safe area paddings.
+                // Otherwise, we use standard relative/full-screen styling.
+                className={`${gameLaunched
+                        ? "fixed z-50 inset-0 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] w-full h-full"
+                        : "w-full h-full"
+                    } md:static md:h-auto md:aspect-[4/3] md:max-h-full md:p-4`}
                 style={{ maxWidth: desktopMaxWidth }}
             >
                 {/* {showFullscreenButton && (

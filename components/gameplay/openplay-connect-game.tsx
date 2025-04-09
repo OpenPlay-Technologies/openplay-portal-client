@@ -5,6 +5,8 @@ import { handleMessage } from "@/openplay-connect/listener";
 import { useBalanceManager } from "../providers/balance-manager-provider";
 import { useInvisibleWallet } from "../providers/invisible-wallet-provider";
 import { useRouter } from "next/navigation";
+import { DEPOSIT_COMPLETED_EVENT, InternalEventEmitter, WITHDRAWAL_COMPLETED_EVENT } from "@/events/event-definitions";
+import { notifyBalanceUpdate } from "@/openplay-connect/host-functions";
 
 interface OpenPlayConnectGameProps {
     houseId: string;
@@ -17,15 +19,33 @@ export default function OpenPlayConnectGame(props: OpenPlayConnectGameProps) {
     // const { keypair, activePlayCap } = useKeypair();
     const { walletId, activePlayCap } = useInvisibleWallet();
     const {
-        selectedBalanceManagerId
+        selectedBalanceManagerId,
+        refreshBalance
     } = useBalanceManager();
+
+    useEffect(() => {
+        const window = iframeRef.current?.contentWindow;
+        if (!window) return;
+        const onDepositCompleted = () => {
+            notifyBalanceUpdate(window);
+        };
+        const onWithdrawalCompleted = () => {
+            notifyBalanceUpdate(window);
+        }
+        InternalEventEmitter.on(DEPOSIT_COMPLETED_EVENT, onDepositCompleted);
+        InternalEventEmitter.on(WITHDRAWAL_COMPLETED_EVENT, onWithdrawalCompleted);
+        return () => {
+            InternalEventEmitter.off(DEPOSIT_COMPLETED_EVENT, onDepositCompleted);
+            InternalEventEmitter.off(WITHDRAWAL_COMPLETED_EVENT, onWithdrawalCompleted);
+        };
+    }, []);
 
     // Define a stable callback to avoid re-attaching the listener
     const messageHandler = useCallback((event: MessageEvent) => {
         if (walletId) {
-            handleMessage(event, router, walletId);
+            handleMessage(event, router, walletId, refreshBalance);
         }
-    }, [walletId, router]);
+    }, [walletId, router, refreshBalance]);
 
     useEffect(() => {
         if (!walletId || !activePlayCap || !selectedBalanceManagerId) return;

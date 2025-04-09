@@ -5,6 +5,7 @@ import { useCurrentAccount } from "@mysten/dapp-kit";
 import {
     fetchAllBalanceManagerCaps,
     fetchAllPlayCaps,
+    fetchBalanceManager,
     fetchBalanceManagersByIds
 } from "@/api/queries/balance-manager";
 import { BalanceManagerCapModel, BalanceManagerModel, PlayCapModel } from "@/api/models/openplay-core";
@@ -18,6 +19,7 @@ export interface BalanceManagerProviderContext {
     currentManagerPlayCaps: PlayCapModel[];
     refreshData: () => Promise<void>;
     refreshPlayCaps: () => Promise<void>;
+    refreshBalance: () => Promise<void>;
     currentBalanceManagerCap: BalanceManagerCapModel | null;
     bmLoading: boolean;
     playCapLoading: boolean;
@@ -181,6 +183,44 @@ export const BalanceManagerProvider: React.FC<{ children: React.ReactNode }> = (
     }, [accountAddress, selectedBalanceManagerId, fetchPlayCaps]);
 
     /**
+     * Refreshes only the balance for the selected balance manager
+     */
+    const refreshBalance = useCallback(async (): Promise<void> => {
+        if (!accountAddress || !selectedBalanceManagerId) {
+            if (debug) console.log("refreshBalance: No account address or selected balance manager available.");
+            return;
+        }
+        try {
+            if (debug) console.log("refreshBalance: Refreshing balance for manager:", selectedBalanceManagerId);
+            // Perform a single query to refresh only the selected manager
+            const updatedManager = await fetchBalanceManager(selectedBalanceManagerId);
+            if (updatedManager) {
+                // Update the current state: replace the selected manager with the fresh data
+                setBalanceManagerData(prevManagers => {
+                    const index = prevManagers.findIndex(manager => manager.id.id === selectedBalanceManagerId);
+                    if (index !== -1) {
+                        // If the manager is already in the list, replace it
+                        if (debug) console.log("refreshBalance: Updating existing manager:", updatedManager);
+                        const newManagers = [...prevManagers];
+                        newManagers[index] = updatedManager;
+                        return newManagers;
+                    } else {
+                        // Otherwise, add it to the list (this case is unlikely if the manager was already selected)
+                        console.warn("refreshBalance: Manager not found in the list");
+                        return prevManagers;
+                    }
+                });
+            } else {
+                if (debug) console.log("refreshBalance: No data returned for manager id:", selectedBalanceManagerId);
+            }
+        } catch (err) {
+            const errorInstance = err instanceof Error ? err : new Error(String(err));
+            console.error("refreshBalance: Error refreshing selected manager:", errorInstance);
+            setError(errorInstance);
+        }
+    }, [accountAddress, selectedBalanceManagerId]);
+
+    /**
      * Main data fetching function that orchestrates the entire data loading flow
      */
     const fetchAllData = useCallback(async () => {
@@ -307,6 +347,7 @@ export const BalanceManagerProvider: React.FC<{ children: React.ReactNode }> = (
         currentManagerPlayCaps,
         refreshData: fetchAllData,
         refreshPlayCaps,
+        refreshBalance,
         currentBalanceManagerCap,
         bmLoading,
         playCapLoading,

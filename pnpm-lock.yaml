@@ -101,6 +101,9 @@ importers:
       lucide-react:
         specifier: ^0.468.0
         version: 0.468.0(react@19.0.0)
+      mitt:
+        specifier: ^3.0.1
+        version: 3.0.1
       next:
         specifier: 15.1.7
         version: 15.1.7(react-dom@19.0.0(react@19.0.0))(react@19.0.0)

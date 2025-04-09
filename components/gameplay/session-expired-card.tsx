@@ -9,12 +9,14 @@ import { useInvisibleWallet } from "../providers/invisible-wallet-provider"
 import { buildMintPlayCapTransaction } from "@/app/play/[gameUrlName]/actions"
 import { Transaction } from "@mysten/sui/transactions"
 import { executeAndWaitForTransactionBlock } from "@/app/actions"
+import { useRouter } from "next/navigation"
 
 export default function SessionExpiredCard() {
 
+    const router = useRouter();
+
     const handleBack = () => {
-        // Navigation logic would go here
-        window.history.back()
+        router.back();
     }
 
     const currentAccount = useCurrentAccount();

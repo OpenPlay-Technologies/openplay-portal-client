@@ -36,6 +36,7 @@ import {
 import { Transaction } from "@mysten/sui/transactions";
 import { Loader } from "../ui/loader";
 import { useBalance } from "../providers/balance-provider";
+import { DEPOSIT_COMPLETED_EVENT, InternalEvent, InternalEventEmitter } from "@/events/event-definitions";
 
 interface DepositModalProps {
     open: boolean;
@@ -59,7 +60,7 @@ export function DepositModal({ open, onOpenChange }: DepositModalProps) {
     const { mutate: signTransaction } = useSignTransaction();
     const {
         setSelectedBalanceManagerId,
-        refreshData,
+        refreshBalance,
         currentBalanceManager,
         currentBalanceManagerCap,
     } = useBalanceManager();
@@ -161,9 +162,14 @@ export function DepositModal({ open, onOpenChange }: DepositModalProps) {
                                 setIsSubmitting(false);
                                 setIsSuccess(true);
                                 setLoading(false);
-                                refreshData();
+                                refreshBalance();
                                 updateInvisWalletPlayCaps();
                                 updateBalance();
+
+                                const internalEvent: InternalEvent = {
+                                    type: DEPOSIT_COMPLETED_EVENT
+                                };
+                                InternalEventEmitter.emit(DEPOSIT_COMPLETED_EVENT, internalEvent)
                                 console.log(resp.objectChanges);
 
                                 const createdBm = resp.objectChanges?.find(

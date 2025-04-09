@@ -4,14 +4,17 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { useDepositModal } from "../providers/deposit-modal-provider"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 
 export default function FirstDepositCard() {
+    const router = useRouter();
 
     const handleBack = () => {
         // Navigation logic would go here
-        window.history.back()
+        router.back();
     }
+
 
     const {openDepositModal} = useDepositModal();
 

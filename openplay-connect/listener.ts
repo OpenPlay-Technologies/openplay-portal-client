@@ -1,9 +1,9 @@
 import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
-import { CLOSE_GAME_REQUEST, INIT_RESPONSE, isMessage, Message, TX_SIGN_AND_EXECUTE_REQUEST, TX_SIGN_AND_EXECUTE_RESPONSE } from "./messages";
+import { BALANCE_UPDATE_NOTIFICATION, CLOSE_GAME_REQUEST, INIT_RESPONSE, isMessage, Message, TX_SIGN_AND_EXECUTE_REQUEST, TX_SIGN_AND_EXECUTE_RESPONSE } from "./messages";
 import { signAndExecuteInvisWalletJsonTransaction } from "@/app/actions";
 
 // Define the message event listener
-export function handleMessage(event: MessageEvent, router: AppRouterInstance, walletId: string) {
+export function handleMessage(event: MessageEvent, router: AppRouterInstance, walletId: string, refreshBalanceFunction: () => void) {
 
     if (!isMessage(event.data)) return;
     const data = event.data;
@@ -26,6 +26,12 @@ export function handleMessage(event: MessageEvent, router: AppRouterInstance, wa
         case CLOSE_GAME_REQUEST:
             // Go BAck
             router.back();
+            break;
+        case BALANCE_UPDATE_NOTIFICATION:
+            setTimeout(() => {
+                refreshBalanceFunction();
+            }
+            , 2000);
             break;
         default:
             // Unknown message type; no action.

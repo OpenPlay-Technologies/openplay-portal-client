@@ -33,6 +33,7 @@ import { Transaction } from "@mysten/sui/transactions"
 import { buildWithdrawFromBalanceManagerTransaction, executeAndWaitForTransactionBlock } from "@/app/actions"
 import { Loader } from "../ui/loader"
 import { useBalance } from "../providers/balance-provider"
+import { InternalEventEmitter, WITHDRAWAL_COMPLETED_EVENT } from "@/events/event-definitions"
 
 interface WithdrawalModalProps {
     open: boolean
@@ -54,7 +55,7 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
     const { mutate: signTransaction } = useSignTransaction()
     const account = useCurrentAccount()
     const { walletAddress: invisWalletAddress, updatePlayCaps: updateInvisWalletPlayCaps } = useInvisibleWallet()
-    const { currentBalanceManager, currentBalanceManagerCap, refreshData } = useBalanceManager();
+    const { currentBalanceManager, currentBalanceManagerCap, refreshBalance } = useBalanceManager();
     const {updateBalance} = useBalance();
 
     // Compute withdrawal amount based on slider percentage
@@ -113,8 +114,11 @@ export function WithdrawalModal({ open, onOpenChange }: WithdrawalModalProps) {
                                 setIsSubmitting(false)
                                 setIsSuccess(true)
                                 updateBalance();
-                                refreshData();
+                                refreshBalance();
                                 updateInvisWalletPlayCaps();
+                                InternalEventEmitter.emit(WITHDRAWAL_COMPLETED_EVENT, {
+                                    type: WITHDRAWAL_COMPLETED_EVENT,
+                                });
                             })
                             .catch((error) => {
                                 setIsSubmitting(false)
