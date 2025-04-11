@@ -43,21 +43,25 @@ export default function Footer() {
                     </div>
                     <div className="flex flex-col items-center justify-center">
                         <ThemeSwitcher />
-                        {/* Subtle Links Section
+                        {/* Subtle Links Section */}
                         <div className="mt-4 space-x-4">
-                        <Link
-                                href="/houses"
-                                className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                            >
-                                Houses
-                            </Link>
                             <Link
-                                href="/rewards"
-                                className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                                href={process.env.NEXT_PUBLIC_MARKETING_URL || "#"}
+                                target="_blank"
+                                className="text text-muted-foreground hover:text-primary transition-colors"
                             >
-                                Positions
+                                What is OpenPlay?
                             </Link>
-                        </div> */}
+                        </div>
+                        <div className="mt-4 space-x-4">
+                            <Link
+                                href={process.env.NEXT_PUBLIC_GITBOOK_URL || "#"}
+                                target="_blank"
+                                className="text text-muted-foreground hover:text-primary transition-colors"
+                            >
+                                Documentation
+                            </Link>
+                        </div>
                     </div>
                 </div>
                 <div className="mt-12 pt-8 border-t border-muted-foreground/20 text-center text-sm text-muted-foreground">
