@@ -61,6 +61,7 @@ export function DepositModal({ open, onOpenChange }: DepositModalProps) {
     const {
         setSelectedBalanceManagerId,
         refreshBalance,
+        refreshData,
         currentBalanceManager,
         currentBalanceManagerCap,
     } = useBalanceManager();
@@ -164,7 +165,14 @@ export function DepositModal({ open, onOpenChange }: DepositModalProps) {
                                 setLoading(false);
                                 refreshBalance();
                                 updateInvisWalletPlayCaps();
-                                updateBalance();
+
+                                if (currentBalanceManager && currentBalanceManagerCap) {
+                                    // If you already have a BM then refreshing just the balance is enough
+                                    updateBalance();
+                                }
+                                else {
+                                    refreshData();
+                                }
 
                                 const internalEvent: InternalEvent = {
                                     type: DEPOSIT_COMPLETED_EVENT

@@ -18,7 +18,7 @@ export default function GamesPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8 max-w-4xl mx-auto">
                     <GameCardV2
                         href="/play/piggy-bank"
-                        src="/piggy-bank/piggy-bank-thumbnail.png"
+                        src="/piggy-bank/piggy-bank-thumbnail-v2.png"
                         alt="Piggy Bank"
                         title="Piggy Bank"
                     />
